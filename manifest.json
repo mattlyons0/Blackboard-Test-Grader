@@ -1,0 +1,47 @@
+{
+  "manifest_version": 2,
+
+  "name": "Blackboard Test Grader",
+  "description": "Automatically grades free response boxes of tests in blackboard.",
+  "author": "Matt Lyons",
+
+  "version": "0.0.1",
+  //"homepage_url": "",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "default_locale": "en",
+  "background": {
+    "scripts": [
+      "src/bg/background.js"
+    ],
+    "persistent": false
+  },
+  "permissions": [
+    "notifications",
+    "https://myasucourses.asu.edu/*",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+
+      "matches": [
+        "https://myasucourses.asu.edu/*"
+      ],
+      "css": [
+        "src/inject/inject.css"
+      ],
+      "js": [
+        "js/jquery/jquery.js",
+        "src/inject/inject.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_end"
+    }
+  ]
+//  "web_accessible_resources": [
+//      "src/inject/*"
+//  ]
+}

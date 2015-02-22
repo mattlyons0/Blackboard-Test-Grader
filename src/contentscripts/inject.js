@@ -1,6 +1,7 @@
 var port=chrome.runtime.connect({name: "MessageServer"});
-
-main();
+$(document).ready(function(){
+    main();
+});
 
 function main(){
     var page=detectPage();
@@ -8,7 +9,9 @@ function main(){
     if(page==="gradingMenu")
         gradingMenu();
     else if(page==="gradeTest")
-        gradeTest();
+        $(document).ready(function(){ //Need to wait until document is ready in order to ensure old value is set before changing value
+            gradeTest();
+        });
 }
 function detectPage(){ //Detects page
     if(document.title === "Needs Grading"){
@@ -152,32 +155,14 @@ function gradeTest(){
             var total=totals[i];
             var response=responses[i];
 
+            $(input).on("focus");
             $(input).val(total);
+            $(input).on("keydown");
+            $(input).on("blur");
         }
     }
     function nextTest(){
-        var nextButton=$('input.submit.button-1');
-        //if($(nextButton).attr("value")==="Submit"){ //We reached the last one
-        //    message({status: "Finished_Grading"}, function(response){
-        //        if(response.status === 200){
-        //            var script = $(nextButton).attr("onclick");
-        //            console.log("Following: "+script);
-        //            //document.location.href=script;
-        //            $(nextButton).onclick();
-        //        }
-        //        else{
-        //            console.error("Error talking to background script: " + response.status);
-        //        }
-        //    });
-        //}
-        //$(nextButton).submit();
-        $(nextButton).attr("onclick", "return true");
-        nextButton.click();
-        //$(nextButton).click();
-        //var script = $(nextButton).attr("onclick");
-        //console.log("Following: "+script);
-        //script=script.substring("return ".length,script.length);
-        //document.location.href="javascript: "+script;
+        injectScript("src/inject/gradeTest.js");
          //Count tests graded?
     }
 
@@ -190,6 +175,14 @@ function gradeTest(){
 function message(msg, response){
     port.postMessage(msg);
     port.onMessage.addListener(response);
+}
+function injectScript(scriptLoc){
+    var s = document.createElement('script');
+    s.src = chrome.extension.getURL(scriptLoc);
+    s.onload = function() {
+        this.parentNode.removeChild(this);
+    };
+    (document.head||document.documentElement).appendChild(s);
 }
 function watchChange(node,callback){
     var MutationObserver    = window.MutationObserver || window.WebKitMutationObserver;

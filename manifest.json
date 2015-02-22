@@ -24,6 +24,9 @@
     "https://myasucourses.asu.edu/*",
     "tabs"
   ],
+//  "externally_connectable": {
+//    "matches": ["https://myasucourses.asu.edu/*"]
+//  },
   "content_scripts": [
     {
 
@@ -31,17 +34,18 @@
         "https://myasucourses.asu.edu/*"
       ],
       "css": [
-        "src/inject/inject.css"
+        "src/contentscripts/inject.css"
       ],
       "js": [
         "js/jquery/jquery.js",
-        "src/inject/inject.js"
+        "src/contentscripts/inject.js"
       ],
       "all_frames": true,
       "run_at": "document_end"
     }
+  ],
+  "web_accessible_resources": [
+      "src/inject/*",
+      "js/jquery/*"
   ]
-//  "web_accessible_resources": [
-//      "src/inject/*"
-//  ]
 }

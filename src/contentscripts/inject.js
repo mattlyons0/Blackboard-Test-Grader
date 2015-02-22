@@ -33,7 +33,7 @@ function gradingMenu() {
     findButton();
     setupEvent();
     setupMenu();
-    //watchChange(gradeAllButton,setupMenu());
+    watchChanges();
 
     function stopAutograding(){
         console.log("Notifying background script we have completed grading.");
@@ -47,7 +47,6 @@ function gradingMenu() {
     }
     function findButton(){
         gradeAllButton = $("#gradeAttemptButton");
-        console.log($(gradeAllButton));
     }
     function setupEvent() {
         window.addEventListener("message", function (event) {
@@ -65,7 +64,9 @@ function gradingMenu() {
     }
 
     function setupMenu() { //Handle injecting elements into page to create buttons
-        findButton();
+        var oldButton=$("#autogradeButton");
+        if(oldButton)
+            $(oldButton).remove();
         var onclick = "window.postMessage({ type: 'FROM_PAGE', text: 'Start_Grading' }, '*')"; //Call event from setupEvent() to get access to inject script.
         var disable="";
         if($(gradeAllButton).attr("class")==="disabled"){
@@ -74,7 +75,12 @@ function gradingMenu() {
         }
         $('<li class="mainButton"><a id="autogradeButton"'+disable+' href="#" onclick="' + onclick + '")>Autograde All</a></li>').insertAfter(gradeAllButton.parent()); //Insert button after "Grade All" button
     }
-
+    function watchChanges(){
+        $(gradeAllButton).bind("DOMSubtreeModified", function(){
+            findButton();
+            setupMenu();
+        });
+    }
     function receiveEvent(event) {
         if (event.data.text === "Start_Grading") {
             autograde();

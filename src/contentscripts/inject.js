@@ -155,10 +155,7 @@ function gradeTest(){
             var total=totals[i];
             var response=responses[i];
 
-            $(input).on("focus");
             $(input).val(total);
-            $(input).on("keydown");
-            $(input).on("blur");
         }
     }
     function nextTest(){

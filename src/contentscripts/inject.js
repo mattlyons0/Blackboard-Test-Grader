@@ -29,11 +29,22 @@ function detectPage(){ //Detects page
 
 function gradingMenu() {
     var gradeAllButton;
+    stopAutograding();
     findButton();
     setupEvent();
     setupMenu();
     //watchChange(gradeAllButton,setupMenu());
 
+    function stopAutograding(){
+        console.log("Notifying background script we have completed grading.");
+        message({status: "Finished_Grading"},function (response){
+            if (response.status === 200) { //200 meaning OK
+            }
+            else {
+                console.error("Error talking to background script: " + response.status);
+            }
+        });
+    }
     function findButton(){
         gradeAllButton = $("#gradeAttemptButton");
         console.log($(gradeAllButton));
@@ -159,7 +170,7 @@ function gradeTest(){
         }
     }
     function nextTest(){
-        injectScript("src/inject/gradeTest.js");
+        $('input.submit.button-1').click();
          //Count tests graded?
     }
 

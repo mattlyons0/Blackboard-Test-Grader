@@ -1,4 +1,4 @@
-Can't go back and then hit autograde
+Give score based on stemmed answer versus stemmed correct answer
 
-Stopword Keyword Removal
-Porters Stemmer to Stem words
+Grade while loading and write grade once the document is loaded
+Clean up code somehow

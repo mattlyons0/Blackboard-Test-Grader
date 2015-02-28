@@ -2,3 +2,9 @@ Give score based on stemmed answer versus stemmed correct answer
 
 Grade while loading and write grade once the document is loaded
 Clean up code somehow
+Sometimes button is clicked too early to go to next test. Using ready is slightly unreliable on slower networks.
+Summary Screen after autograding?
+    Count tests
+    Show most common keywords
+        That matched
+        That didn't match

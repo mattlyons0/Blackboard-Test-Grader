@@ -5,7 +5,7 @@ $(document).ready(function(){
 
 function main(){
     var page=detectPage();
-    console.log(page);
+    console.log("Detected Page: "+page);
     if(page==="gradingMenu")
         gradingMenu();
     else if(page==="gradeTest")
@@ -48,7 +48,7 @@ function gradingMenu() {
     function findButton(){
         gradeAllButton = $("#gradeAttemptButton");
     }
-    function setupEvent() {
+    function setupEvent() { //Create an event the webpage can call to tell us to start autograding
         window.addEventListener("message", function (event) {
             // We only accept messages from ourselves
             if (event.source != window) {
@@ -67,17 +67,17 @@ function gradingMenu() {
         var oldButton=$("#autogradeButton");
         if(oldButton)
             $(oldButton).remove();
-        var onclick = "window.postMessage({ type: 'FROM_PAGE', text: 'Start_Grading' }, '*')"; //Call event from setupEvent() to get access to inject script.
+        var onclick = "window.postMessage({ type: 'FROM_PAGE', text: 'Start_Grading' }, '*')"; //Call event from setupEvent() to get access to this script.
         var disable="";
-        if($(gradeAllButton).attr("class")==="disabled"){
+        if($(gradeAllButton).attr("class")==="disabled"){ //Disable button if theres nothing to grade
             disable=" class=\"disabled\"";
             onclick="";
         }
         $('<li class="mainButton"><a id="autogradeButton"'+disable+' href="#" onclick="' + onclick + '")>Autograde All</a></li>').insertAfter(gradeAllButton.parent()); //Insert button after "Grade All" button
     }
-    function watchChanges(){
+    function watchChanges(){ //If the Grade All button changes (to be disabled), we want to disable the autograde button too.
         $(gradeAllButton).bind("DOMSubtreeModified", function(){
-            findButton();
+            findButton(); //Update variable with the changed button
             setupMenu();
         });
     }
@@ -101,7 +101,7 @@ function gradingMenu() {
 
     function gradeAttempt() { //Start autograding
         console.log("Starting Grading");
-        document.location.href = $(gradeAllButton).attr("href");//Terminates Script
+        document.location.href = $(gradeAllButton).attr("href");//(Most reliable way of changing page) Terminates Script
     }
 }
 
@@ -112,85 +112,64 @@ function gradingMenu() {
 function gradeTest(){
     message({prompt: "grading?"},function (response) {
         var grading=response.prompt;
-        if(!grading){
+        if(!grading){ //Should we autograde?
             console.warn("Autograding Disabled");
             return;
         }
+
         var gradeInputs = [];
         var gradeTotals = [];
         var responses = [];
-        $("input").each(function(index){
-            if($(this).attr("type")==="text"&&$(this).attr("id").indexOf("points__")===0&&$(this).attr("name").indexOf("score-override-_")===0){ //Then we know its a answer field
-                gradeInputs.push(this);
-            }
-        });
-        for(var i=0;i<gradeInputs.length;i++){
-            var label=$(gradeInputs).parent("label").text();
-            label=label.substring(" out of ".length);
-            label=label.substring(0,label.indexOf(" points "));
+        var answers = [];
+
+        for(var i=0;true;i++){ //Increment until broken when we realize a element doesn't exist
+            //Select input field element
+            var input = $("input[id^='points__'][name^='score-override-_'][type='text']").get(i); //input element, id starts with 'points__', name starts with 'score-override-_', type=text
+            //Select correct answer element
+            var correct = $($("img + div.vtbegenerated > p").get(i)).text(); //p element with a parent of a div element with .vtbegenerated class, with the element above it being a image
+            //Select the attempt answer element
+            var given = $($("td:contains('Given Answer:') + td").get(i)).text(); //td element with the previous element being a td with the string containing 'Given Answer:'
+            if($.trim(given)==="[None Given]")
+                given="";
+
+            if(!input)
+                break; //Exit loop, we have run out of questions to grade.
+
+            gradeInputs.push(input);
+            answers.push(correct);
+            responses.push(given);
+
+            //Calculate total points the free response is out of
+            var label = $($(gradeInputs).parent("label").get(i)).text(); //get the label text which is the parent element of the input field
+            label = label.replace(/[^0-9]/g, ''); //remove everything that isn't a number
             gradeTotals.push(parseInt(label));
         }
-        $(".vtbegenerated").each(function(index){
-            if($(this).is("div")&&$(this).children().length>0){
-                var children=$(this).children();
-                var found=false;
-                for(var i=0;i<children.length;i++) {
-                    if ($(children.get(i)).is("p")) {
-                        found = true;
-                        break;
-                    }
-                }
-                if(found) {
-                    var parents = $(this).parentsUntil("tbody");
-                    for (var i = 0; i < $(parents).length; i++) {
-                        var child = $(parents.get(i)).children();
-                        for(var x=0;x<$(parents).length;x++){
-                            var child2=$(child.get(x)).children();
-                            for(var z=0;z<$(child2).length;z++)
-                            var child3=child2.get(z);
-                            if ($(child3).is("span.label") && $(child3).text() === "Given Answer:") {
-                                responses.push($($(this).children().get(x)).text());
-                                break;
-                            }
-                        }
+        console.log("Grading "+gradeInputs.length+" responses.");
 
-                    }
-                }
-            }
-        });
-        console.log("Found "+gradeInputs.length+" grades to fill.");
-        console.log(gradeTotals);
-        console.log(responses);
-
-        grade(gradeInputs,gradeTotals,responses);
+        grade(gradeInputs, gradeTotals, responses, answers);
         nextTest();
     });
 
-    function grade(inputs,totals,responses){
+    function grade(inputs,totals,responses,answers){
         for(var i=0;i<inputs.length;i++){
             var input=inputs[i];
             var total=totals[i];
             var response=responses[i];
+            var answer=answers[i];
 
-            response=response.removeStopWords();
-            var words=response.split(" ");
-            var stems=[];
-            for(var x=0;x<words.length;x++){
-                stems.push(stemmer(words[x]));
-            }
+            response=stem(response);
+            answer=stem(answer);
 
-            console.log(stems);
-            var stemmed="";
-            for(var z=0;z<stems.length;z++){
-                stemmed+=" "+stems[z];
-            }
-            console.log(stemmed);
-            $(input).val(total);
+            console.log("Stemmed Response: ");
+            console.log(response);
+            console.log("Stemmed Correct Answer: ");
+            console.log(answer);
+
+            $(input).val(total); //IF THIS HAPPENS TOO EARLY (Before theAttemptNavController loads) THE PAGE WILL NOT VALIDATE!
         }
     }
     function nextTest(){
-        $('input.submit.button-1').click();
-         //Count tests graded?
+        $('input.submit.button-1').click(); //ONLY WORKS IF THIS HAPPENS AFTER ALL OTHER SCRIPTS ON THE PAGE (theAttemptNavController has to be loaded)
     }
 
 }
@@ -211,673 +190,14 @@ function injectScript(scriptLoc){
     };
     (document.head||document.documentElement).appendChild(s);
 }
-function watchChange(node,callback){
-    var MutationObserver    = window.MutationObserver || window.WebKitMutationObserver;
-    var myObserver          = new MutationObserver (mutationHandler);
-    var obsConfig           = { attributes: true };
-
-//--- Add a target node to the observer. Can only add one node at a time.
-    node.each ( function () {
-        myObserver.observe (this, obsConfig);
-    } );
-
-    function mutationHandler (mutationRecords) {
-        myObserver.disconnect();
-        callback();
-    }
-}
-// Porter stemmer in Javascript. Few comments, but it's easy to follow against the rules in the original
-// paper, in
-//
-//  Porter, 1980, An algorithm for suffix stripping, Program, Vol. 14,
-//  no. 3, pp 130-137,
-//
-// see also http://www.tartarus.org/~martin/PorterStemmer
-
-// Release 1 be 'andargor', Jul 2004
-// Release 2 (substantially revised) by Christopher McKenzie, Aug 2009
-
-var stemmer = (function(){
-    var step2list = {
-            "ational" : "ate",
-            "tional" : "tion",
-            "enci" : "ence",
-            "anci" : "ance",
-            "izer" : "ize",
-            "bli" : "ble",
-            "alli" : "al",
-            "entli" : "ent",
-            "eli" : "e",
-            "ousli" : "ous",
-            "ization" : "ize",
-            "ation" : "ate",
-            "ator" : "ate",
-            "alism" : "al",
-            "iveness" : "ive",
-            "fulness" : "ful",
-            "ousness" : "ous",
-            "aliti" : "al",
-            "iviti" : "ive",
-            "biliti" : "ble",
-            "logi" : "log"
-        },
-
-        step3list = {
-            "icate" : "ic",
-            "ative" : "",
-            "alize" : "al",
-            "iciti" : "ic",
-            "ical" : "ic",
-            "ful" : "",
-            "ness" : ""
-        },
-
-        c = "[^aeiou]",          // consonant
-        v = "[aeiouy]",          // vowel
-        C = c + "[^aeiouy]*",    // consonant sequence
-        V = v + "[aeiou]*",      // vowel sequence
-
-        mgr0 = "^(" + C + ")?" + V + C,               // [C]VC... is m>0
-        meq1 = "^(" + C + ")?" + V + C + "(" + V + ")?$",  // [C]VC[V] is m=1
-        mgr1 = "^(" + C + ")?" + V + C + V + C,       // [C]VCVC... is m>1
-        s_v = "^(" + C + ")?" + v;                   // vowel in stem
-
-    return function (w) {
-        var 	stem,
-            suffix,
-            firstch,
-            re,
-            re2,
-            re3,
-            re4,
-            origword = w;
-
-        if (w.length < 3) { return w; }
-
-        firstch = w.substr(0,1);
-        if (firstch == "y") {
-            w = firstch.toUpperCase() + w.substr(1);
-        }
-
-        // Step 1a
-        re = /^(.+?)(ss|i)es$/;
-        re2 = /^(.+?)([^s])s$/;
-
-        if (re.test(w)) { w = w.replace(re,"$1$2"); }
-        else if (re2.test(w)) {	w = w.replace(re2,"$1$2"); }
-
-        // Step 1b
-        re = /^(.+?)eed$/;
-        re2 = /^(.+?)(ed|ing)$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            re = new RegExp(mgr0);
-            if (re.test(fp[1])) {
-                re = /.$/;
-                w = w.replace(re,"");
-            }
-        } else if (re2.test(w)) {
-            var fp = re2.exec(w);
-            stem = fp[1];
-            re2 = new RegExp(s_v);
-            if (re2.test(stem)) {
-                w = stem;
-                re2 = /(at|bl|iz)$/;
-                re3 = new RegExp("([^aeiouylsz])\\1$");
-                re4 = new RegExp("^" + C + v + "[^aeiouwxy]$");
-                if (re2.test(w)) {	w = w + "e"; }
-                else if (re3.test(w)) { re = /.$/; w = w.replace(re,""); }
-                else if (re4.test(w)) { w = w + "e"; }
-            }
-        }
-
-        // Step 1c
-        re = /^(.+?)y$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            stem = fp[1];
-            re = new RegExp(s_v);
-            if (re.test(stem)) { w = stem + "i"; }
-        }
-
-        // Step 2
-        re = /^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|biliti|logi)$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            stem = fp[1];
-            suffix = fp[2];
-            re = new RegExp(mgr0);
-            if (re.test(stem)) {
-                w = stem + step2list[suffix];
-            }
-        }
-
-        // Step 3
-        re = /^(.+?)(icate|ative|alize|iciti|ical|ful|ness)$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            stem = fp[1];
-            suffix = fp[2];
-            re = new RegExp(mgr0);
-            if (re.test(stem)) {
-                w = stem + step3list[suffix];
-            }
-        }
-
-        // Step 4
-        re = /^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize)$/;
-        re2 = /^(.+?)(s|t)(ion)$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            stem = fp[1];
-            re = new RegExp(mgr1);
-            if (re.test(stem)) {
-                w = stem;
-            }
-        } else if (re2.test(w)) {
-            var fp = re2.exec(w);
-            stem = fp[1] + fp[2];
-            re2 = new RegExp(mgr1);
-            if (re2.test(stem)) {
-                w = stem;
-            }
-        }
-
-        // Step 5
-        re = /^(.+?)e$/;
-        if (re.test(w)) {
-            var fp = re.exec(w);
-            stem = fp[1];
-            re = new RegExp(mgr1);
-            re2 = new RegExp(meq1);
-            re3 = new RegExp("^" + C + v + "[^aeiouwxy]$");
-            if (re.test(stem) || (re2.test(stem) && !(re3.test(stem)))) {
-                w = stem;
-            }
-        }
-
-        re = /ll$/;
-        re2 = new RegExp(mgr1);
-        if (re.test(w) && re2.test(w)) {
-            re = /.$/;
-            w = w.replace(re,"");
-        }
-
-        // and turn initial Y back to y
-
-        if (firstch == "y") {
-            w = firstch.toLowerCase() + w.substr(1);
-        }
-
-        return w;
-    }
-})();
-String.prototype.removeStopWords = function() {
-    var x;
-    var y;
-    var word;
-    var stop_word;
-    var regex_str;
-    var regex;
-    var cleansed_string = this.valueOf();
-    var stop_words = new Array(
-        'a',
-        'about',
-        'above',
-        'across',
-        'after',
-        'again',
-        'against',
-        'all',
-        'almost',
-        'alone',
-        'along',
-        'already',
-        'also',
-        'although',
-        'always',
-        'among',
-        'an',
-        'and',
-        'another',
-        'any',
-        'anybody',
-        'anyone',
-        'anything',
-        'anywhere',
-        'are',
-        'area',
-        'areas',
-        'around',
-        'as',
-        'ask',
-        'asked',
-        'asking',
-        'asks',
-        'at',
-        'away',
-        'b',
-        'back',
-        'backed',
-        'backing',
-        'backs',
-        'be',
-        'became',
-        'because',
-        'become',
-        'becomes',
-        'been',
-        'before',
-        'began',
-        'behind',
-        'being',
-        'beings',
-        'best',
-        'better',
-        'between',
-        'big',
-        'both',
-        'but',
-        'by',
-        'c',
-        'came',
-        'can',
-        'cannot',
-        'case',
-        'cases',
-        'certain',
-        'certainly',
-        'clear',
-        'clearly',
-        'come',
-        'could',
-        'd',
-        'did',
-        'differ',
-        'different',
-        'differently',
-        'do',
-        'does',
-        'done',
-        'down',
-        'down',
-        'downed',
-        'downing',
-        'downs',
-        'during',
-        'e',
-        'each',
-        'early',
-        'either',
-        'end',
-        'ended',
-        'ending',
-        'ends',
-        'enough',
-        'even',
-        'evenly',
-        'ever',
-        'every',
-        'everybody',
-        'everyone',
-        'everything',
-        'everywhere',
-        'f',
-        'face',
-        'faces',
-        'fact',
-        'facts',
-        'far',
-        'felt',
-        'few',
-        'find',
-        'finds',
-        'first',
-        'for',
-        'four',
-        'from',
-        'full',
-        'fully',
-        'further',
-        'furthered',
-        'furthering',
-        'furthers',
-        'g',
-        'gave',
-        'general',
-        'generally',
-        'get',
-        'gets',
-        'give',
-        'given',
-        'gives',
-        'go',
-        'going',
-        'good',
-        'goods',
-        'got',
-        'great',
-        'greater',
-        'greatest',
-        'group',
-        'grouped',
-        'grouping',
-        'groups',
-        'h',
-        'had',
-        'has',
-        'have',
-        'having',
-        'he',
-        'her',
-        'here',
-        'herself',
-        'high',
-        'high',
-        'high',
-        'higher',
-        'highest',
-        'him',
-        'himself',
-        'his',
-        'how',
-        'however',
-        'i',
-        'if',
-        'important',
-        'in',
-        'interest',
-        'interested',
-        'interesting',
-        'interests',
-        'into',
-        'is',
-        'it',
-        'its',
-        'itself',
-        'j',
-        'just',
-        'k',
-        'keep',
-        'keeps',
-        'kind',
-        'knew',
-        'know',
-        'known',
-        'knows',
-        'l',
-        'large',
-        'largely',
-        'last',
-        'later',
-        'latest',
-        'least',
-        'less',
-        'let',
-        'lets',
-        'like',
-        'likely',
-        'long',
-        'longer',
-        'longest',
-        'm',
-        'made',
-        'make',
-        'making',
-        'man',
-        'many',
-        'may',
-        'me',
-        'member',
-        'members',
-        'men',
-        'might',
-        'more',
-        'most',
-        'mostly',
-        'mr',
-        'mrs',
-        'much',
-        'must',
-        'my',
-        'myself',
-        'n',
-        'necessary',
-        'need',
-        'needed',
-        'needing',
-        'needs',
-        'never',
-        'new',
-        'new',
-        'newer',
-        'newest',
-        'next',
-        'no',
-        'nobody',
-        'non',
-        'noone',
-        'not',
-        'nothing',
-        'now',
-        'nowhere',
-        'number',
-        'numbers',
-        'o',
-        'of',
-        'off',
-        'often',
-        'old',
-        'older',
-        'oldest',
-        'on',
-        'once',
-        'one',
-        'only',
-        'open',
-        'opened',
-        'opening',
-        'opens',
-        'or',
-        'order',
-        'ordered',
-        'ordering',
-        'orders',
-        'other',
-        'others',
-        'our',
-        'out',
-        'over',
-        'p',
-        'part',
-        'parted',
-        'parting',
-        'parts',
-        'per',
-        'perhaps',
-        'place',
-        'places',
-        'point',
-        'pointed',
-        'pointing',
-        'points',
-        'possible',
-        'present',
-        'presented',
-        'presenting',
-        'presents',
-        'problem',
-        'problems',
-        'put',
-        'puts',
-        'q',
-        'quite',
-        'r',
-        'rather',
-        'really',
-        'right',
-        'right',
-        'room',
-        'rooms',
-        's',
-        'said',
-        'same',
-        'saw',
-        'say',
-        'says',
-        'second',
-        'seconds',
-        'see',
-        'seem',
-        'seemed',
-        'seeming',
-        'seems',
-        'sees',
-        'several',
-        'shall',
-        'she',
-        'should',
-        'show',
-        'showed',
-        'showing',
-        'shows',
-        'side',
-        'sides',
-        'since',
-        'small',
-        'smaller',
-        'smallest',
-        'so',
-        'some',
-        'somebody',
-        'someone',
-        'something',
-        'somewhere',
-        'state',
-        'states',
-        'still',
-        'still',
-        'such',
-        'sure',
-        't',
-        'take',
-        'taken',
-        'than',
-        'that',
-        'the',
-        'their',
-        'them',
-        'then',
-        'there',
-        'therefore',
-        'these',
-        'they',
-        'thing',
-        'things',
-        'think',
-        'thinks',
-        'this',
-        'those',
-        'though',
-        'thought',
-        'thoughts',
-        'three',
-        'through',
-        'thus',
-        'to',
-        'today',
-        'together',
-        'too',
-        'took',
-        'toward',
-        'turn',
-        'turned',
-        'turning',
-        'turns',
-        'two',
-        'u',
-        'under',
-        'until',
-        'up',
-        'upon',
-        'us',
-        'use',
-        'used',
-        'uses',
-        'v',
-        'very',
-        'w',
-        'want',
-        'wanted',
-        'wanting',
-        'wants',
-        'was',
-        'way',
-        'ways',
-        'we',
-        'well',
-        'wells',
-        'went',
-        'were',
-        'what',
-        'when',
-        'where',
-        'whether',
-        'which',
-        'while',
-        'who',
-        'whole',
-        'whose',
-        'why',
-        'will',
-        'with',
-        'within',
-        'without',
-        'work',
-        'worked',
-        'working',
-        'works',
-        'would',
-        'x',
-        'y',
-        'year',
-        'years',
-        'yet',
-        'you',
-        'young',
-        'younger',
-        'youngest',
-        'your',
-        'yours',
-        'z'
-    )
-
-    // Split out all the individual words in the phrase
-    words = cleansed_string.match(/[^\s]+|\s+[^\s+]$/g)
-
-    // Review all the words
-    for(x=0; x < words.length; x++) {
-        // For each word, check all the stop words
-        for(y=0; y < stop_words.length; y++) {
-            // Get the current word
-            word = words[x].replace(/\s+|[^a-z]+/ig, "");   // Trim the word and remove non-alpha
-
-            // Get the stop word
-            stop_word = stop_words[y];
-
-            // If the word matches the stop word, remove it from the keywords
-            if(word.toLowerCase() == stop_word) {
-                // Build the regex
-                regex_str = "^\\s*"+stop_word+"\\s*$";      // Only word
-                regex_str += "|^\\s*"+stop_word+"\\s+";     // First word
-                regex_str += "|\\s+"+stop_word+"\\s*$";     // Last word
-                regex_str += "|\\s+"+stop_word+"\\s+";      // Word somewhere in the middle
-                regex = new RegExp(regex_str, "ig");
-
-                // Remove the word from the keywords
-                cleansed_string = cleansed_string.replace(regex, " ");
-            }
+function stem(str){
+    var words=str.split(" ");
+    var stems=[];
+    for(var x=0;x<words.length;x++){
+        var stem= $.trim(stemmer(words[x])); //Stem word and remove spaces and new lines after stemming
+        if(stem) { //If stem isn't empty
+            stems.push(stem);
         }
     }
-    return cleansed_string.replace(/^\s+|\s+$/g, "");
+    return stems;
 }

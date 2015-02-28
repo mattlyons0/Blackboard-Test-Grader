@@ -38,6 +38,7 @@
       ],
       "js": [
         "js/jquery/jquery.js",
+        "js/stemmer.js",
         "src/contentscripts/inject.js"
       ],
       "all_frames": true,

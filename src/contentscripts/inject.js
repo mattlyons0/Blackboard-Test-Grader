@@ -154,18 +154,33 @@ function gradeTest(){
         for(var i=0;i<inputs.length;i++){
             var input=inputs[i];
             var total=totals[i];
-            var response=responses[i];
-            var answer=answers[i];
 
-            response=stem(response);
-            answer=stem(answer);
+            var response= $.unique(stem(responses[i])); //Stemmed without duplicates
+            var answer= $.unique(stem(answers[i])); //Stemmed without duplicates
+
+            var totalWords=answer.length;
+            var matchingWords=[];
+            answer.forEach(function(word){
+                if($.inArray(word,response)!==-1){
+                    matchingWords.push(word);
+                }
+            });
+            var score=(matchingWords.length/totalWords)*total+""; //Calculate score into a string so we can shorten it potentially
+            if(score.length>10){ //Thats a problem because blackboard doesn't allow more than 10 characters to be submitted
+                score=score.substring(0,10); //Only take the first 10 characters
+            }
 
             console.log("Stemmed Response: ");
             console.log(response);
             console.log("Stemmed Correct Answer: ");
             console.log(answer);
 
-            $(input).val(total); //IF THIS HAPPENS TOO EARLY (Before theAttemptNavController loads) THE PAGE WILL NOT VALIDATE!
+            $(input).val(score); //IF THIS HAPPENS TOO EARLY (Before theAttemptNavController loads) THE PAGE WILL NOT VALIDATE!
+
+            console.log("Scored "+score+"/"+total+" because the following stems matched: ");
+            console.log(matchingWords);
+            console.log("and didn't match: ");
+            //TODO
         }
     }
     function nextTest(){
@@ -191,10 +206,12 @@ function injectScript(scriptLoc){
     (document.head||document.documentElement).appendChild(s);
 }
 function stem(str){
+    str=str.toLowerCase();
+    str=str.replace(/\W+/g, " "); //Replace all non alphanumeric characters with a space
     var words=str.split(" ");
     var stems=[];
     for(var x=0;x<words.length;x++){
-        var stem= $.trim(stemmer(words[x])); //Stem word and remove spaces and new lines after stemming
+        var stem= stemmer(words[x]); //Stem word
         if(stem) { //If stem isn't empty
             stems.push(stem);
         }

@@ -160,10 +160,13 @@ function gradeTest(){
 
             var totalWords=answer.length;
             var matchingWords=[];
+            var nonmatchingWords=[];
             answer.forEach(function(word){
                 if($.inArray(word,response)!==-1){
                     matchingWords.push(word);
                 }
+                else
+                    nonmatchingWords.push(word);
             });
             var score=(matchingWords.length/totalWords)*total+""; //Calculate score into a string so we can shorten it potentially
             if(score.length>10){ //Thats a problem because blackboard doesn't allow more than 10 characters to be submitted
@@ -180,7 +183,7 @@ function gradeTest(){
             console.log("Scored "+score+"/"+total+" because the following stems matched: ");
             console.log(matchingWords);
             console.log("and didn't match: ");
-            //TODO
+            console.log(nonmatchingWords)
         }
     }
     function nextTest(){

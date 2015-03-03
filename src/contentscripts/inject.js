@@ -211,6 +211,7 @@ function injectScript(scriptLoc){
 function stem(str){
     str=str.toLowerCase();
     str=str.replace(/\W+/g, " "); //Replace all non alphanumeric characters with a space
+    str=str.removeStopWords();
     var words=str.split(" ");
     var stems=[];
     for(var x=0;x<words.length;x++){

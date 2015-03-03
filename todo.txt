@@ -11,3 +11,6 @@ Summary Screen after autograding?
         That didn't match
 Check answer stems against thesaurus to generate thesaurus stems
 Download stopword list from online, store it locally, settings to manually add words to stopword list
+Research on google word context
+Add potential way to regrade, through tests table in grading center
+Show notification after grading

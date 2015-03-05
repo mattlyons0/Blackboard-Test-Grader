@@ -212,7 +212,13 @@ function stem(str){
     str=str.toLowerCase();
     str=str.replace(/\W+/g, " "); //Replace all non alphanumeric characters with a space
     str=str.removeStopWords();
+    if(!str) {
+        str = "";
+    }
     var words=str.split(" ");
+    if(!words){
+        return [];
+    }
     var stems=[];
     for(var x=0;x<words.length;x++){
         var stem= stemmer(words[x]); //Stem word

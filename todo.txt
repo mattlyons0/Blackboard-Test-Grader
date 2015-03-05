@@ -14,3 +14,4 @@ Download stopword list from online, store it locally, settings to manually add w
 Research on google word context
 Add potential way to regrade, through tests table in grading center
 Show notification after grading
+Handle duplicate words better

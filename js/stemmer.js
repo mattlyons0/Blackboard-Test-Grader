@@ -628,6 +628,8 @@ String.prototype.removeStopWords = function() {
     words = cleansed_string.match(/[^\s]+|\s+[^\s+]$/g)
 
     // Review all the words
+    if(!words)
+        return null;
     for(x=0; x < words.length; x++) {
         // For each word, check all the stop words
         for(y=0; y < stop_words.length; y++) {

@@ -12,6 +12,10 @@ function main(){
         $(document).ready(function(){ //Need to wait until document is ready in order to ensure old value is set before changing value
             gradeTest();
         });
+    else if(page=="gradeCenter")
+        $(document).ready(function() {
+            gradeCenter();
+        });
 }
 function detectPage(){ //Detects page
     if(document.title === "Needs Grading"){
@@ -19,6 +23,9 @@ function detectPage(){ //Detects page
     }
     else if((document.title).indexOf("Grade Test: ")===0) { //Title starts with 'Grade Test: '
         return "gradeTest";
+    }
+    else if(document.title ==="Grade Center"){
+        return "gradeCenter";
     }
     return null;
 
@@ -192,9 +199,38 @@ function gradeTest(){
 
 }
 
+/*###################
+ //## Grade Center ##
+ /#################*/
+function gradeCenter(){
+    $(document.body).bind("DOMSubtreeModified",function(){
+        watchClick();
+    }); //Every time the data changes, make sure we add our listener
+
+    function watchClick(){ //If the popup is triggered we want to check if it contains a grade attempts button so we can inject a autograde button
+        $("a[id^='cmlink_']").click(setupMenu());
+    }
+    function setupMenu(){
+        menu=$("div.cmdiv"); //The created popup menu is a div with the class cmdiv
+        if(menu && $(menu).length>0){ //Check if menu has been created
+            linkBefore = $("div.cmdiv > ul > li > a:contains('Grade Attempts')");
+            if(linkBefore.length>0)
+                createLink($(linkBefore).first().parent());
+        }
+    }
+    function createLink(linkBefore){ //Insert autograde link after linkBefore
+        console.log($(linkBefore).attr("href"));
+        if($(linkBefore).next().text()==="Autograde Attempts")
+            return; //We already injected it
+        var id=$(linkBefore).attr('id');
+        var linkid=$(linkBefore).children().first().attr('id');
+        //$('<li id="'+id+'"><a href="#" id="'+linkid+'" onclick="" title="Autograde Attempts">Autograde Attempts</a></li>').insertAfter(linkBefore); //Insert autograde button into list
+    }
+}
+
 /*####################
 //## Static Methods ##
-################### */
+####################*/
 
 function message(msg, response){
     port.postMessage(msg);

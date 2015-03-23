@@ -1,5 +1,3 @@
-Give score based on stemmed answer versus stemmed correct answer
-
 Grade while loading and write grade once the document is loaded
 Clean up code somehow
 Sometimes button is clicked too early to go to next test. Using ready is slightly unreliable on slower networks.
@@ -14,4 +12,10 @@ Download stopword list from online, store it locally, settings to manually add w
 Research on google word context
 Add potential way to regrade, through tests table in grading center
 Show notification after grading
-Handle duplicate words better
+Handle duplicate words better (keep duplicates in correct answer)
+
+Users Doc (This is what it does, this is how to deploy it)
+Documentation
+Polish
+
+Gradecenter autograde link is broken

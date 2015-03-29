@@ -46,7 +46,7 @@
     }
   ],
   "web_accessible_resources": [
-      "src/inject/*",
-      "js/jquery/*"
+    "src/inject/*",
+    "js/jquery/*"
   ]
 }

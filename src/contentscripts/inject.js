@@ -5,6 +5,8 @@ $(document).ready(function(){
 
 function main(){
     var page=detectPage();
+    if(!page)
+        return;
     console.log("Detected Page: "+page);
     if(page==="gradingMenu")
         gradingMenu();
@@ -194,7 +196,8 @@ function gradeTest(){
         }
     }
     function nextTest(){
-        $('input.submit.button-1').click(); //ONLY WORKS IF THIS HAPPENS AFTER ALL OTHER SCRIPTS ON THE PAGE (theAttemptNavController has to be loaded)
+        //$('input.submit.button-1').click(); //ONLY WORKS IF THIS HAPPENS AFTER ALL OTHER SCRIPTS ON THE PAGE (theAttemptNavController has to be loaded)
+        injectScript("src/inject/autogradeNext.js");
     }
 
 }

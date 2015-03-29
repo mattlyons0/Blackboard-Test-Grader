@@ -19,3 +19,6 @@ Documentation
 Polish
 
 Gradecenter autograde link is broken
+More visual grading
+    Put layer to block user interaction
+    State current progress...

@@ -29,6 +29,7 @@ function detectPage(){ //Detects page
 	else if(document.title ==="Grade Center"){
 		return "gradeCenter";
 	}
+	stopAutograding(); //If we are on a unknown page we can assume that we can stop autograding
 	return null;
 
 }
@@ -196,10 +197,20 @@ function gradeTest(){
  //## Grade Center ##
  /#################*/
 function gradeCenter(){
-	stopAutograding()
+	stopAutograding();
+	checkPage();
 	setupEvent();
 	injectToggle();
 
+	function checkPage(){ //Check if it is the assignments grade center page, if it is, don't show the autograde toggle
+		$("#pageTitleDiv").bind("DOMSubtreeModified", function(){
+			var text=$("#pageTitleText").text();
+			console.log(text);
+			if(text.indexOf("Assignments")>-1){ //We are on the assignments grade center page
+				$("#autogradingToggle").remove();
+			}
+		});
+	}
 	function injectToggle(){
 		var buttonBefore=$('.sub.primary').first();
 		injectScript("src/inject/autogradingToggleButton.js");
@@ -249,13 +260,6 @@ function gradeCenter(){
 			});
 		}
 
-	}
-	function gradeAttempt() { //Start autograding
-		console.log("Starting Grading");
-		var elem=$("div.cmdiv > ul > li > a:contains('Grade Attempts')");
-		console.log($(elem).attr('href'));
-		//document.location.href = $(elem).attr("href");//(Most reliable way of changing page) Terminates Script
-		elem.onclick.apply(elem);
 	}
 }
 

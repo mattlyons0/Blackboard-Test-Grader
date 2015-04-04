@@ -1,6 +1,5 @@
 Grade while loading and write grade once the document is loaded
 Clean up code somehow
-Don't show autograde on assignments page
 Summary Screen after autograding?
 	Count tests
 	Show keywords from answer and percent matches

@@ -1,0 +1,1 @@
+console.log(getEventListeners(document.getElementById('context_menu_tag_item1_h6hello')));

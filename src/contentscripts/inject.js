@@ -206,6 +206,7 @@ function gradeTest(){
  //## Grade Center ##
  /#################*/
 function gradeCenter(){
+	setupEvent();
 	$(document.body).bind("DOMSubtreeModified",function(){
 		watchClick();
 	}); //Every time the data changes, make sure we add our listener
@@ -218,16 +219,73 @@ function gradeCenter(){
 		if(menu && $(menu).length>0){ //Check if menu has been created
 			linkBefore = $("div.cmdiv > ul > li > a:contains('Grade Attempts')");
 			if(linkBefore.length>0)
-				createLink($(linkBefore).first().parent());
+				setTimeout(function(){
+					createLink($(linkBefore).first());
+				}, 3000);
+
 		}
 	}
 	function createLink(linkBefore){ //Insert autograde link after linkBefore
-		console.log($(linkBefore).attr("href"));
 		if($(linkBefore).next().text()==="Autograde Attempts")
 			return; //We already injected it
-		var id=$(linkBefore).attr('id');
-		var linkid=$(linkBefore).children().first().attr('id');
-		//$('<li id="'+id+'"><a href="#" id="'+linkid+'" onclick="" title="Autograde Attempts">Autograde Attempts</a></li>').insertAfter(linkBefore); //Insert autograde button into list
+		var onclick = "window.postMessage({ type: 'FROM_PAGE', text: 'Start_Grading' }, '*')"; //Call event from setupEvent() to get access to this script.
+		var id=$(linkBefore).attr('id')+"hello";
+		var clone=$(linkBefore).clone(true,true);
+		//$(clone).child().text("Autograde Attempts");
+		//$(clone).attr('id','no');
+		//console.log(clone);
+		//$(clone).insertAfter($(linkBefore));
+		$('<a href="#" id="'+id+'" title="Grade Attempts">Autograde Attempts</a>').insertAfter(linkBefore);
+		//var newElm=$('<li id="'+id+'"><a href="#" id="'+id+'" title="Grade Attempts">Autograde Attempts</a></li>').insertAfter(linkBefore); //Insert autograde button into list
+		var events = $(linkBefore).data('events');
+		var $other_link = $(newElm);
+		if ( events ) {
+			for ( var eventType in events ) {
+				for ( var idx in events[eventType] ) {
+					// this will essentially do $other_link.click( fn ) for each bound event
+					$other_link[ eventType ]( events[eventType][idx].handler );
+				}
+			}
+		}
+
+	}
+
+	function setupEvent() { //Create an event the webpage can call to tell us to start autograding
+		window.addEventListener("message", function (event) {
+			// We only accept messages from ourselves
+			if (event.source != window) {
+				console.warn("Event triggered from external source: '" + event.source + "' will be blocked.");
+				return;
+			}
+
+			if (event.data.type && (event.data.type == "FROM_PAGE")) {
+				console.log("Message Received by Inject Script : " + event.data.text);
+				receiveEvent(event);
+			}
+		}, false);
+	}
+	function receiveEvent(event){
+		if (event.data.text === "Start_Grading") {
+			autograde();
+		}
+	}
+	function autograde() { //Prepare background script for autograding
+		console.log("Notifying background script we are starting grading.");
+		message({status: "Starting_Grading"},function (response){
+			if (response.status === 200) { //200 meaning OK
+				gradeAttempt();
+			}
+			else {
+				console.error("Error talking to background script: " + response.status);
+			}
+		});
+	}
+	function gradeAttempt() { //Start autograding
+		console.log("Starting Grading");
+		var elem=$("div.cmdiv > ul > li > a:contains('Grade Attempts')");
+		console.log($(elem).attr('href'));
+		//document.location.href = $(elem).attr("href");//(Most reliable way of changing page) Terminates Script
+		elem.onclick.apply(elem);
 	}
 }
 

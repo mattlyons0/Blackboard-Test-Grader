@@ -24,11 +24,11 @@ function processMessage(request){
 	}
 }
 function processStatus(status){
-	if(status === "Starting_Grading"){
+	if(status === "Starting_Grading"||status=== "Enable_Grading"){
 		grading=true;
 		port.postMessage({status: 200}); //200 meaning OK
 	}
-	else if(status === "Finished_Grading"){
+	else if(status === "Finished_Grading"|| status==="Disable_Grading"){
 		grading=false;
 		port.postMessage({status: 200});
 	}

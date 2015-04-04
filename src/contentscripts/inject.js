@@ -44,16 +44,6 @@ function gradingMenu() {
 	setupMenu();
 	watchChanges();
 
-	function stopAutograding(){
-		console.log("Notifying background script we have completed grading.");
-		message({status: "Finished_Grading"},function (response){
-			if (response.status === 200) { //200 meaning OK
-			}
-			else {
-				console.error("Error talking to background script: " + response.status);
-			}
-		});
-	}
 	function findButton(){
 		gradeAllButton = $("#gradeAttemptButton");
 	}
@@ -206,48 +196,14 @@ function gradeTest(){
  //## Grade Center ##
  /#################*/
 function gradeCenter(){
+	stopAutograding()
 	setupEvent();
-	$(document.body).bind("DOMSubtreeModified",function(){
-		watchClick();
-	}); //Every time the data changes, make sure we add our listener
+	injectToggle();
 
-	function watchClick(){ //If the popup is triggered we want to check if it contains a grade attempts button so we can inject a autograde button
-		$("a[id^='cmlink_']").click(setupMenu());
-	}
-	function setupMenu(){
-		menu=$("div.cmdiv"); //The created popup menu is a div with the class cmdiv
-		if(menu && $(menu).length>0){ //Check if menu has been created
-			linkBefore = $("div.cmdiv > ul > li > a:contains('Grade Attempts')");
-			if(linkBefore.length>0)
-				setTimeout(function(){
-					createLink($(linkBefore).first());
-				}, 3000);
-
-		}
-	}
-	function createLink(linkBefore){ //Insert autograde link after linkBefore
-		if($(linkBefore).next().text()==="Autograde Attempts")
-			return; //We already injected it
-		var onclick = "window.postMessage({ type: 'FROM_PAGE', text: 'Start_Grading' }, '*')"; //Call event from setupEvent() to get access to this script.
-		var id=$(linkBefore).attr('id')+"hello";
-		var clone=$(linkBefore).clone(true,true);
-		//$(clone).child().text("Autograde Attempts");
-		//$(clone).attr('id','no');
-		//console.log(clone);
-		//$(clone).insertAfter($(linkBefore));
-		$('<a href="#" id="'+id+'" title="Grade Attempts">Autograde Attempts</a>').insertAfter(linkBefore);
-		//var newElm=$('<li id="'+id+'"><a href="#" id="'+id+'" title="Grade Attempts">Autograde Attempts</a></li>').insertAfter(linkBefore); //Insert autograde button into list
-		var events = $(linkBefore).data('events');
-		var $other_link = $(newElm);
-		if ( events ) {
-			for ( var eventType in events ) {
-				for ( var idx in events[eventType] ) {
-					// this will essentially do $other_link.click( fn ) for each bound event
-					$other_link[ eventType ]( events[eventType][idx].handler );
-				}
-			}
-		}
-
+	function injectToggle(){
+		var buttonBefore=$('.sub.primary').first();
+		injectScript("src/inject/autogradingToggleButton.js");
+		$('<li><a id="autogradingToggle" class="sub primary" href="javascript:toggleAutograding()">Autograding Disabled</a></li>').insertAfter(buttonBefore);
 	}
 
 	function setupEvent() { //Create an event the webpage can call to tell us to start autograding
@@ -265,20 +221,34 @@ function gradeCenter(){
 		}, false);
 	}
 	function receiveEvent(event){
-		if (event.data.text === "Start_Grading") {
-			autograde();
+		if (event.data.text === "Enable_Grading") {
+			autograde(true);
+		}
+		else if(event.data.text === "Disable_Grading"){
+			autograde(false);
 		}
 	}
-	function autograde() { //Prepare background script for autograding
-		console.log("Notifying background script we are starting grading.");
-		message({status: "Starting_Grading"},function (response){
-			if (response.status === 200) { //200 meaning OK
-				gradeAttempt();
-			}
-			else {
-				console.error("Error talking to background script: " + response.status);
-			}
-		});
+	function autograde(enable) { //Prepare background script for autograding
+		var toggle=$("#autogradingToggle");
+		if(enable){
+			message({status: "Enable_Grading"},function (response){
+				if (response.status !== 200) { //200 meaning OK
+					console.error("Error talking to background script: " + response.status);
+					toggle.text("Error");
+					toggle.style.background="#CC3300"
+				}
+			});
+		}
+		else{
+			message({status: "Disable_Grading"},function (response){
+				if (response.status !== 200) { //200 meaning OK
+					console.error("Error talking to background script: " + response.status);
+					toggle.text("Error");
+					toggle.style.background="#CC3300"
+				}
+			});
+		}
+
 	}
 	function gradeAttempt() { //Start autograding
 		console.log("Starting Grading");
@@ -293,6 +263,16 @@ function gradeCenter(){
 //## Static Methods ##
 ####################*/
 
+function stopAutograding(){
+	console.log("Notifying background script we have completed grading.");
+	message({status: "Finished_Grading"},function (response){
+		if (response.status === 200) { //200 meaning OK
+		}
+		else {
+			console.error("Error talking to background script: " + response.status);
+		}
+	});
+}
 function message(msg, response){
 	port.postMessage(msg);
 	port.onMessage.addListener(response);

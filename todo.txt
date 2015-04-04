@@ -1,6 +1,6 @@
 Grade while loading and write grade once the document is loaded
 Clean up code somehow
-Sometimes button is clicked too early to go to next test. Using ready is slightly unreliable on slower networks.
+Don't show autograde on assignments page
 Summary Screen after autograding?
 	Count tests
 	Show keywords from answer and percent matches

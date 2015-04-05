@@ -122,10 +122,19 @@ function gradeTest(){
 		}
 		else {
 			setupEvent();
+			setupVisuals();
 			searchTest();
 		}
 	});
-
+	function setupVisuals(){
+		var backgroundColor=$('body').css('background');
+		backgroundColor=backgroundColor.substring(0,backgroundColor.indexOf(" url"));
+		backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.3)";
+		var inner="<div><h1 class='steptitle' style='font-size: 35pt;text-shadow:0 1px 0 #eee;'>Autograding</h1><br/>" +
+			"<h1 class='steptitle' style='text-shadow:0 1px 0 #eee;font-size:20pt;'><a href=\"javascript:window.postMessage({ type: 'FROM_PAGE', text: 'Stop_Grading' }, '*')\">Stop Grading</a></h1></div>"
+		var overlay=$("<div id='autogradeOverlay' style='background: "+backgroundColor+";bottom: 0;left: 0;position: fixed;right: 0;" +
+		"top: 0;text-align:center;padding-top: 10%;padding-bottom:20%'>"+inner+"</div>").insertAfter($('body'));
+	}
 	function searchTest(){
 		var counter=$('span.count').text();
 		counter=counter.substring(counter.indexOf("of ")+3);
@@ -235,9 +244,20 @@ function gradeTest(){
 			}
 
 			if (event.data.type && (event.data.type == "FROM_PAGE")) {
-				injectResponded=true;
+				if(event.data.text=="ReadyForNext"||event.data.text=="NotReady")
+					injectResponded=true;
 				if(event.data.text=="ReadyForNext"){
 					$('input.submit.button-1').click(); //If theAttemptNavigator has not been loaded will go to Forbidden Page
+				}
+				else if(event.data.text=="Stop_Grading"){
+					message({status: "Finished_Grading"},function (response){
+						if (response.status !== 200) { //200 meaning OK
+							console.error("Error talking to background script: " + response.status);
+						}
+						else{
+							$("#autogradeOverlay").remove();
+						}
+					});
 				}
 
 			}

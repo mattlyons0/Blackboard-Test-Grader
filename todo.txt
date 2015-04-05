@@ -17,9 +17,6 @@ Documentation
 Polish
 How to edit
 
-More visual grading
-	Put layer to block user interaction
-	State current progress...
 Make Icon
 Options Menu
 	Disable Progress Notification

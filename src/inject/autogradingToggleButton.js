@@ -3,7 +3,7 @@ function toggleAutograding(){
 	var current=toggle.innerHTML;
 	if(current=="Autograding Disabled") {
 		toggle.innerHTML = "Autograding Enabled";
-		toggle.style.background="lightgrey";
+		toggle.style.background="#9ADA47";
 		window.postMessage({ type: 'FROM_PAGE', text: 'Enable_Grading' }, '*')
 	}
 	else if(current=="Autograding Enabled"||current=="Error"){

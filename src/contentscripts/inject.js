@@ -112,11 +112,14 @@ function gradingMenu() {
 function gradeTest(){
 	message({prompt: "grading?"},function (response) {
 		var grading=response.prompt;
-		if(!grading){ //Should we autograde?
+		if(grading===false){ //Should we autograde?
 			console.warn("Autograding Disabled");
-			return;
 		}
-
+		else {
+			searchTest();
+		}
+	});
+	function searchTest(){
 		var gradeInputs = [];
 		var gradeTotals = [];
 		var responses = [];
@@ -147,9 +150,7 @@ function gradeTest(){
 		console.log("Grading "+gradeInputs.length+" responses.");
 
 		grade(gradeInputs, gradeTotals, responses, answers);
-		nextTest();
-	});
-
+	}
 	function grade(inputs,totals,responses,answers){
 		for(var i=0;i<inputs.length;i++){
 			var input=inputs[i];
@@ -183,8 +184,18 @@ function gradeTest(){
 			console.log("Scored "+score+"/"+total+" because the following stems matched: ");
 			console.log(matchingWords);
 			console.log("and didn't match: ");
-			console.log(nonmatchingWords)
+			console.log(nonmatchingWords);
+
+			message({status: "Graded_Response"},function (response){});
 		}
+		message({status: "Graded_Test"}, function(response){
+			if (response.status === 200) { //200 meaning OK
+				nextTest();
+			}
+			else {
+				console.error("Error talking to background script: " + response.status);
+			}
+		});
 	}
 	function nextTest(){
 		//$('input.submit.button-1').click(); //ONLY WORKS IF THIS HAPPENS AFTER ALL OTHER SCRIPTS ON THE PAGE (theAttemptNavController has to be loaded)
@@ -205,7 +216,6 @@ function gradeCenter(){
 	function checkPage(){ //Check if it is the assignments grade center page, if it is, don't show the autograde toggle
 		$("#pageTitleDiv").bind("DOMSubtreeModified", function(){
 			var text=$("#pageTitleText").text();
-			console.log(text);
 			if(text.indexOf("Assignments")>-1){ //We are on the assignments grade center page
 				$("#autogradingToggle").remove();
 			}

@@ -1,5 +1,5 @@
 Clean up code somehow
-Fix grading tests multiple times
+Show progress notification when autograding
 Summary Screen after autograding?
 	Count tests
 	Show keywords from answer and percent matches
@@ -17,7 +17,6 @@ Documentation
 Polish
 How to edit
 
-Gradecenter autograde link is broken
 More visual grading
 	Put layer to block user interaction
 	State current progress...

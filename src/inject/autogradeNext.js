@@ -1,16 +1,13 @@
-click();
+check();
 
-function click() {
+function check() {
 	if (theAttemptNavController) {
-		var next = document.getElementsByClassName('submit button-1')[0];
-		if (next.tagName == "INPUT") {
-			while (!theAttemptNavController) {
-				setTimeout(function () {
-					console.log("Waiting for grading script to load...");
-				}, 50);
-			}
-			next.onclick(); //Wont get here until theAttemptNavController exists
-			//setTimeout(click(),500);
-		}
+		window.postMessage({type: 'FROM_PAGE', text: 'ReadyForNext'}, '*');
 	}
+	else{
+		window.postMessage({type: 'FROM_PAGE', text: 'NotReady'}, '*');
+		console.log("Waiting for page to load.");
+		setTimeout(function(){check()},250);
+	}
+
 }

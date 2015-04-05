@@ -3,6 +3,7 @@ var port;
 var grading=false;
 
 //Data when grading:
+var currentWindow;
 var tab;
 var responseCount;
 var testCount;
@@ -31,6 +32,9 @@ function processStatus(status,event){
 		grading=true;
 		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 			tab=tabs[0];
+		});
+		chrome.windows.getCurrent(function(current){
+			currentWindow=current;
 		});
 		responseCount=0;
 		testCount=0;
@@ -65,6 +69,9 @@ function processPrompt(prompt){
 	if(prompt==="grading?"){
 		port.postMessage({prompt: grading});
 	}
+	else if(prompt==="tabStatus"){
+		port.postMessage({prompt: tab.status});
+	}
 	else{
 		unknownMsg(prompt)
 	}
@@ -88,16 +95,18 @@ function gradingCompleted(){
 		message: "Autograding Complete",
 		iconUrl: "icons/icon128.png",
 		priority: 2, //Makes it show for 25 seconds before hiding
-		eventTime: 24500, //Delete it after 24.5 seconds so it doesn't go into the tray
 		isClickable: true,
 		items: [{ title: "", message: "Graded "+responseCount+" response"+rPlural+" from "+testCount+" test"+tPlural+"."}
 		]
 	}
 	chrome.notifications.create("Complete",options, function(){});
 	chrome.notifications.onClicked.addListener(function(key) {focusGradeTab(key);});
+	setTimeout(function(){chrome.notifications.clear("Complete",function(){})},25000); //remove from tray after 25 seconds
 }
 function focusGradeTab(key){
 	if(key=="Complete") {
+		console.log(currentWindow);
+		chrome.windows.update(currentWindow.id,{focused: true}); //Focus Grading Window
 		chrome.tabs.update(tab.id, {highlighted: true}); //Selects grading tab
 		chrome.notifications.clear(key,function(){}); //Clear notification
 	}

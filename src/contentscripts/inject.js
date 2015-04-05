@@ -110,15 +110,22 @@ function gradingMenu() {
 #######################*/
 
 function gradeTest(){
+	var injectResponded=false;
+	var responeded=false;
 	message({prompt: "grading?"},function (response) {
+		if(responeded===true)
+			return;
+		responeded=true;
 		var grading=response.prompt;
 		if(grading===false){ //Should we autograde?
 			console.warn("Autograding Disabled");
 		}
 		else {
+			setupEvent();
 			searchTest();
 		}
 	});
+
 	function searchTest(){
 		var gradeInputs = [];
 		var gradeTotals = [];
@@ -198,8 +205,37 @@ function gradeTest(){
 		});
 	}
 	function nextTest(){
-		//$('input.submit.button-1').click(); //ONLY WORKS IF THIS HAPPENS AFTER ALL OTHER SCRIPTS ON THE PAGE (theAttemptNavController has to be loaded)
-		injectScript("src/inject/autogradeNext.js");
+		injectScript("src/inject/autogradeNext.js");//There is a bug in chrome when you are browsing in other tabs sometimes this call will be ignored...
+		setTimeout(function(){
+			if(!injectResponded)
+				console.warn("Inject Failed, retrying...");
+				nextTest();
+		},1000);
+		//setTimeout(function(){
+		//	message({prompt: "tabStatus"}, function(response){
+		//		console.log("Tab Status: "+response.prompt);
+		//		if(response.prompt=="complete"){
+		//			nextTest();
+		//		}
+		//	})
+		//},250);
+	}
+	function setupEvent() { //Create an event the webpage can call to tell us to start autograding
+		window.addEventListener("message", function (event) {
+			// We only accept messages from ourselves
+			if (event.source != window) {
+				console.warn("Event triggered from external source: '" + event.source + "' will be blocked.");
+				return;
+			}
+
+			if (event.data.type && (event.data.type == "FROM_PAGE")) {
+				injectResponded=true;
+				if(event.data.text=="ReadyForNext"){
+					$('input.submit.button-1').click(); //If theAttemptNavigator has not been loaded will go to Forbidden Page
+				}
+
+			}
+		}, false);
 	}
 
 }

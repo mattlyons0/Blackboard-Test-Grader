@@ -112,6 +112,7 @@ function gradingMenu() {
 function gradeTest(){
 	var injectResponded=false;
 	var responeded=false;
+	var hackInput;
 	message({prompt: "grading?"},function (response) {
 		if(responeded===true)
 			return;
@@ -138,7 +139,6 @@ function gradeTest(){
 	function searchTest(){
 		var counter=$('span.count').text();
 		counter=counter.substring(counter.indexOf("of ")+3);
-		console.log(counter);
 		message({status: "TestTotal",info: parseInt(counter)},function (response){});
 
 
@@ -151,7 +151,7 @@ function gradeTest(){
 			//Select input field element
 			var input = $("input[id^='points__'][name^='score-override-_'][type='text']").get(i); //input element, id starts with 'points__', name starts with 'score-override-_', type=text
 			//Select correct answer element
-			var correct = $($("img + div.vtbegenerated > p").get(i)).text(); //p element with a parent of a div element with .vtbegenerated class, with the element above it being a image
+			var correct = $($("img[alt='Correct'] + div.vtbegenerated").get(i)).text(); //a div element with .vtbegenerated class, with the element above it being a image
 			//Select the attempt answer element
 			var given = $($("td:contains('Given Answer:') + td").get(i)).text(); //td element with the previous element being a td with the string containing 'Given Answer:'
 			if($.trim(given)==="[None Given]")
@@ -170,7 +170,6 @@ function gradeTest(){
 			gradeTotals.push(parseInt(label));
 		}
 		console.log("Grading "+gradeInputs.length+" responses.");
-
 		grade(gradeInputs, gradeTotals, responses, answers);
 	}
 	function grade(inputs,totals,responses,answers){
@@ -182,6 +181,8 @@ function gradeTest(){
 			var answer= $.unique(stem(answers[i])); //Stemmed without duplicates
 
 			var totalWords=answer.length;
+			if(totalWords==0)
+				totalWords=1;
 			var matchingWords=[];
 			var nonmatchingWords=[];
 			answer.forEach(function(word){
@@ -195,14 +196,20 @@ function gradeTest(){
 			if(score.length>10){ //Thats a problem because blackboard doesn't allow more than 10 characters to be submitted
 				score=score.substring(0,10); //Only take the first 10 characters
 			}
+			if(i==0){
+				score+="1"; //add a 1 to the end
+				hackInput=input;
+			}
 
 			console.log("Stemmed Response: ");
 			console.log(response);
 			console.log("Stemmed Correct Answer: ");
 			console.log(answer);
 
-			$(input).val(score); //IF THIS HAPPENS TOO EARLY (Before theAttemptNavController loads) THE PAGE WILL NOT VALIDATE!
+			$(input).val(score);
 
+			if(i==0)
+				score=score.substring(0,score.length-1);//Fix for command line output
 			console.log("Scored "+score+"/"+total+" because the following stems matched: ");
 			console.log(matchingWords);
 			console.log("and didn't match: ");
@@ -235,6 +242,7 @@ function gradeTest(){
 		//	})
 		//},250);
 	}
+	var ready=false;
 	function setupEvent() { //Create an event the webpage can call to tell us to start autograding
 		window.addEventListener("message", function (event) {
 			// We only accept messages from ourselves
@@ -246,10 +254,16 @@ function gradeTest(){
 			if (event.data.type && (event.data.type == "FROM_PAGE")) {
 				if(event.data.text=="ReadyForNext"||event.data.text=="NotReady")
 					injectResponded=true;
-				if(event.data.text=="ReadyForNext"){
+				if(event.data.text=="ReadyForNext"&&!ready){
+					ready=true;//only call once
+
+					var score=($(hackInput).val());
+					score=score.substring(0,score.length-1);//fix hack
+					$(hackInput).val(score); //If theAttemptNavigator wasn't loaded when the value was set it thinks the value hasn't been changed.
 					$('input.submit.button-1').click(); //If theAttemptNavigator has not been loaded will go to Forbidden Page
 				}
 				else if(event.data.text=="Stop_Grading"){
+					$("#autogradeOverlay").remove();
 					message({status: "Finished_Grading"},function (response){
 						if (response.status !== 200) { //200 meaning OK
 							console.error("Error talking to background script: " + response.status);

@@ -21,3 +21,8 @@ Make Icon
 Options Menu
 	Disable Progress Notification
 	Disable completion notification
+Grade individual Item Name from needs grading menu
+
+Time:
+Focused: 2.1 sec/test
+Background: 2.5 sec/test

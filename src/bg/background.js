@@ -7,6 +7,7 @@ var currentWindow;
 var tab;
 var responseCount;
 var testCount;
+var testTotal;
 
 chrome.runtime.onConnect.addListener(function(portt){
 	console.assert(portt.name == "MessageServer");
@@ -15,7 +16,7 @@ chrome.runtime.onConnect.addListener(function(portt){
 	});
 	port=portt;
 });
-
+chrome.notifications.onClicked.addListener(function(key) {focusGradeTab(key);});
 function processMessage(request){
 	if(request.status!=null){
 		processStatus(request.status,request);
@@ -38,6 +39,7 @@ function processStatus(status,event){
 		});
 		responseCount=0;
 		testCount=0;
+		refreshProgress();
 		port.postMessage({status: 200}); //200 meaning OK
 	}
 	else if(status==="Graded_Response"){
@@ -48,6 +50,18 @@ function processStatus(status,event){
 	else if(status==="Graded_Test"){
 		if(grading){
 			testCount++;
+			var plural="";
+			if(testCount>1)
+				pural="s";
+			var opt = {
+				type: "progress",
+				title: "Grading Test",
+				message: "Grading Test "+(testCount)+"/"+testTotal,
+				iconUrl: "icons/icon128.png",
+				priority: 2,
+				progress: Math.round(((testCount)/testTotal)*100)
+			}
+			chrome.notifications.create("Progress",opt, function(){});
 		}
 		port.postMessage({status: 200}); //test count is guarenteed
 	}
@@ -60,6 +74,9 @@ function processStatus(status,event){
 	else if(status==="Disable_Grading"||status==="Finished_Grading"){
 		grading=false;
 		port.postMessage({status: 200});
+	}
+	else if(status==="TestTotal"){
+		testTotal=event.info;
 	}
 	else{
 		unknownMsg(status)
@@ -83,10 +100,10 @@ function unknownMsg(request){
 
 function gradingCompleted(){
 	rPlural="";
-	if(responseCount>0)
+	if(responseCount>1)
 		rPlural="s";
 	tPlural="";
-	if(testCount>0)
+	if(testCount>1)
 		tPlural="s";
 
 	var options = {
@@ -99,15 +116,21 @@ function gradingCompleted(){
 		items: [{ title: "", message: "Graded "+responseCount+" response"+rPlural+" from "+testCount+" test"+tPlural+"."}
 		]
 	}
+	chrome.notifications.clear("Progress",function(){});
 	chrome.notifications.create("Complete",options, function(){});
-	chrome.notifications.onClicked.addListener(function(key) {focusGradeTab(key);});
 	setTimeout(function(){chrome.notifications.clear("Complete",function(){})},25000); //remove from tray after 25 seconds
 }
 function focusGradeTab(key){
-	if(key=="Complete") {
-		console.log(currentWindow);
-		chrome.windows.update(currentWindow.id,{focused: true}); //Focus Grading Window
-		chrome.tabs.update(tab.id, {highlighted: true}); //Selects grading tab
+	chrome.windows.update(currentWindow.id,{focused: true}); //Focus Grading Window
+	chrome.tabs.update(tab.id, {highlighted: true}); //Selects grading tab
+	if(key=="Complete")
 		chrome.notifications.clear(key,function(){}); //Clear notification
-	}
+}
+function refreshProgress(){
+	setTimeout(function(){
+		chrome.notifications.clear("Progress",function(){});
+		if(grading){
+			refreshProgress();
+		}
+		},24500); //remove from tray after 25 seconds
 }

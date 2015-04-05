@@ -127,6 +127,12 @@ function gradeTest(){
 	});
 
 	function searchTest(){
+		var counter=$('span.count').text();
+		counter=counter.substring(counter.indexOf("of ")+3);
+		console.log(counter);
+		message({status: "TestTotal",info: parseInt(counter)},function (response){});
+
+
 		var gradeInputs = [];
 		var gradeTotals = [];
 		var responses = [];

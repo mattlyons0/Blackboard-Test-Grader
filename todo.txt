@@ -1,5 +1,5 @@
 Clean up code somehow
-Show progress notification when autograding
+Investigate clicking toggle not applying
 Summary Screen after autograding?
 	Count tests
 	Show keywords from answer and percent matches
@@ -20,3 +20,7 @@ How to edit
 More visual grading
 	Put layer to block user interaction
 	State current progress...
+Make Icon
+Options Menu
+	Disable Progress Notification
+	Disable completion notification

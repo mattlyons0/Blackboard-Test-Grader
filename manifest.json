@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "Blackboard Test Grader",
-  "description": "Automatically grades free response boxes of tests in blackboard.",
+  "description": "Adds button to automatically grades free response boxes of tests in blackboard.",
   "author": "Matt Lyons",
 
   "version": "0.0.1",
@@ -20,13 +20,10 @@
 	"persistent": false
   },
   "permissions": [
-	"notifications",
-	"https://myasucourses.asu.edu/*",
-	"tabs"
+	"notifications", //Display notifications and progress alerts
+	"https://myasucourses.asu.edu/*", //Blackboard URL
+	"tabs" //For messaging and focus tab when click notification
   ],
-//  "externally_connectable": {
-//    "matches": ["https://myasucourses.asu.edu/*"]
-//  },
   "content_scripts": [
 	{
 
@@ -39,14 +36,16 @@
 	  "js": [
 		"js/jquery/jquery.js",
 		"js/stemmer.js",
-		"src/contentscripts/inject.js"
+		"src/contentscripts/inject.js",
+		"src/contentscripts/gradingMenu.js",
+		"src/contentscripts/gradeTest.js",
+		"src/contentscripts/gradeCenter.js"
 	  ],
 	  "all_frames": true,
 	  "run_at": "document_end"
 	}
   ],
   "web_accessible_resources": [
-	"src/inject/*",
-	"js/jquery/*"
+	"src/inject/*"
   ]
 }

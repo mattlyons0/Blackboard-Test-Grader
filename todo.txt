@@ -15,6 +15,7 @@ Options Menu
 	Disable Progress Notification
 	Disable completion notification
 Grade individual Item Name from needs grading menu
+Remove debug logging
 Increment version to 1.0 upon release
 Compile CRX file
 

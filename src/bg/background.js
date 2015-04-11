@@ -1,4 +1,5 @@
 var port;
+var responseObject;
 
 var grading=false;
 
@@ -6,8 +7,8 @@ var grading=false;
 var currentWindow;
 var tab;
 var responseCount;
-var testCount;
-var testTotal;
+var testCount=0;
+var testTotal=0;
 
 chrome.runtime.onConnect.addListener(function(portt){
 	console.assert(portt.name == "MessageServer");
@@ -18,10 +19,12 @@ chrome.runtime.onConnect.addListener(function(portt){
 });
 chrome.notifications.onClicked.addListener(function(key) {focusGradeTab(key);});
 function processMessage(request){
-	if(request.status!=null){
+	if(request.status){
+		responseObject={msg: request.status};
 		processStatus(request.status,request);
 	}
-	if(request.prompt!=null){
+	if(request.prompt){
+		responseObject={msg: request.prompt};
 		processPrompt(request.prompt);
 	}
 	if(request.prompt==null&&request.status==null){
@@ -40,7 +43,8 @@ function processStatus(status,event){
 		responseCount=0;
 		testCount=0;
 		refreshProgress();
-		port.postMessage({status: 200}); //200 meaning OK
+		responseObject.status=200; //200 meaning OK
+		port.postMessage(responseObject);
 	}
 	else if(status==="Graded_Response"){
 		if(grading){
@@ -63,17 +67,25 @@ function processStatus(status,event){
 			}
 			chrome.notifications.create("Progress",opt, function(){});
 		}
-		port.postMessage({status: 200}); //test count is guarenteed
+		responseObject.status=200;
+		port.postMessage(responseObject); //test count is guarenteed
 	}
 	else if(status==="Finished_Grading"&&grading){
 		grading=false;
-		if(testCount>0)
+		if(testCount>0) {
 			gradingCompleted();
-		port.postMessage({status: 200});
+			responseObject.status=200; //OK
+			port.postMessage(responseObject);
+		}
+		else {
+			responseObject.status=204; //OK, No data (nothing was graded)
+			port.postMessage(responseObject);
+		}
 	}
 	else if(status==="Disable_Grading"||status==="Finished_Grading"){
 		grading=false;
-		port.postMessage({status: 200});
+		responseObject.status=204; //OK, No data
+		port.postMessage(responseObject);
 	}
 	else if(status==="TestTotal"){
 		testTotal=event.info;
@@ -84,10 +96,12 @@ function processStatus(status,event){
 }
 function processPrompt(prompt){
 	if(prompt==="grading?"){
-		port.postMessage({prompt: grading});
+		responseObject.prompt=grading;
+		port.postMessage(responseObject);
 	}
 	else if(prompt==="tabStatus"){
-		port.postMessage({prompt: tab.status});
+		responseObject.prompt=tab.status;
+		port.postMessage(responseObject);
 	}
 	else{
 		unknownMsg(prompt)

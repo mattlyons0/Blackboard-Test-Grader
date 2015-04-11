@@ -53,16 +53,16 @@ function gradeCenter(){
 		var toggle=$("#autogradingToggle");
 		if(enable){
 			message({status: "Enable_Grading"},function (response){
-				if (response.status !== 200) { //200 meaning OK
+				if (response.status !== 200) { //2xx meaning OK
 					console.error("Error talking to background script: " + response.status);
 					toggle.text("Error");
-					toggle.style.background="#CC3300"
+					toggle.style.background="#CC3300" //Red
 				}
 			});
 		}
 		else{
 			message({status: "Disable_Grading"},function (response){
-				if (response.status !== 200) { //200 meaning OK
+				if (response.status !== 200&&response.status!==204) { //2xx meaning OK
 					console.error("Error talking to background script: " + response.status);
 					toggle.text("Error");
 					toggle.style.background="#CC3300" //Red

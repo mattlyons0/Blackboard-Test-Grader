@@ -35,7 +35,7 @@ function gradeTest(){
 		var inner="<div><h1 class='steptitle' style='font-size: 35pt;text-shadow:0 1px 0 #eee;'>Autograding</h1><br/>" +
 			"<h1 class='steptitle' style='text-shadow:0 1px 0 #eee;font-size:20pt;'><a href=\"javascript:window.postMessage({ type: 'FROM_PAGE', text: 'Stop_Grading' }, '*')\">Stop Grading</a></h1></div>"
 		var overlay=$("<div id='autogradeOverlay' style='background: "+backgroundColor+";bottom: 0;left: 0;position: fixed;right: 0;" +
-		"top: 0;text-align:center;padding-top: 10%;padding-bottom:20%'>"+inner+"</div>").insertAfter($('body'));
+		"top: 0;text-align:center;padding-top: 10%;padding-bottom:20%; z-index:1000'>"+inner+"</div>").insertAfter($('body'));
 	}
 	function searchTest(){
 		var counter=$('span.count').text(); //Grab test number in queue
@@ -160,12 +160,15 @@ function gradeTest(){
 				else if(event.data.text=="Stop_Grading"){ //The stop grading link was clicked
 					$("#autogradeOverlay").remove(); //Remove overlay on current page
 					message({status: "Finished_Grading"},function (response){ //Tell the background script to stop grading
-						if (response.status !== 200) { //200 meaning OK
-							console.error("Error talking to background script: " + response.status);
+						if (response.status==204) { //2xx meaning OK
+							hookSummary();
 						}
+						else if(response.status==200){}
 						else{
-							$("#autogradeOverlay").remove(); //Remove overlay on current page now, potentially later than first call
+							console.error("Error talking to background script: " + response.status);
+							return;
 						}
+						$("#autogradeOverlay").remove(); //Remove overlay on current page now, potentially later than first call
 					});
 				}
 

@@ -30,9 +30,6 @@
 	  "matches": [
 		"https://myasucourses.asu.edu/*"
 	  ],
-	  "css": [
-		"src/contentscripts/inject.css"
-	  ],
 	  "js": [
 		"js/jquery/jquery.js",
 		"js/stemmer.js",

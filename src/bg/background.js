@@ -6,9 +6,15 @@ var grading=false;
 //Data when grading:
 var currentWindow;
 var tab;
-var responseCount;
+var responseCount=0;
 var testCount=0;
 var testTotal=0;
+var matchingStems=[];//Contains array of arrays of stems
+var nonmatchingStems=[]; //Contains array of arrays of stems
+var grades=[]; //Contains grades for each test
+var totalGrades=[]; //Contains total for each test
+var testNames=[]; //Contains test name for each test
+var numQuestions=[]; //Contains number of questions per test
 
 chrome.runtime.onConnect.addListener(function(portt){
 	console.assert(portt.name == "MessageServer");
@@ -42,6 +48,12 @@ function processStatus(status,event){
 		});
 		responseCount=0;
 		testCount=0;
+		matchingStems=[];
+		nonmatchingStems=[];
+		grades=[];
+		totalGrades=[];
+		testNames=[];
+		numQuestions=[];
 		refreshProgress();
 		responseObject.status=200; //200 meaning OK
 		port.postMessage(responseObject);
@@ -49,11 +61,16 @@ function processStatus(status,event){
 	else if(status==="Graded_Response"){
 		if(grading){
 			responseCount++;
-		} //responsecount isnt guarenteed
+			matchingStems.push(event.matching);
+			nonmatchingStems.push(event.nonmatching);
+		}
 	}
 	else if(status==="Graded_Test"){
 		if(grading){
 			testCount++;
+			grades.push(event.score);
+			totalGrades.push(event.total);
+			numQuestions.push(event.numQuestions);
 			var plural="";
 			if(testCount>1)
 				pural="s";
@@ -89,6 +106,7 @@ function processStatus(status,event){
 	}
 	else if(status==="TestTotal"){
 		testTotal=event.info;
+		testNames.push(event.test);
 	}
 	else{
 		unknownMsg(status)
@@ -101,6 +119,17 @@ function processPrompt(prompt){
 	}
 	else if(prompt==="tabStatus"){
 		responseObject.prompt=tab.status;
+		port.postMessage(responseObject);
+	}
+	else if(prompt==="data"){
+		responseObject.responseCount=responseCount;
+		responseObject.testCount=testCount;
+		responseObject.matchingStems=matchingStems;
+		responseObject.nonmatchingStems=nonmatchingStems;
+		responseObject.grades=grades;
+		responseObject.totalGrades=totalGrades;
+		responseObject.testNames=testNames;
+		responseObject.numQuestions=numQuestions;
 		port.postMessage(responseObject);
 	}
 	else{

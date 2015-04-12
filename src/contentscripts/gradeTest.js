@@ -13,6 +13,7 @@ function gradeTest(){
 	var injectResponded=false; //We succeeded at injecting our script into the webpage to check if the necessary script loaded
 	var responded=false; //We got a response from the background about if we are grading
 	var hackInput; //Input field that we will change at the very end to prevent grade not saving as a result of inproperly caching (since we change the value before the script potentially loads)
+	var questions; //Number of questions in this test
 	message({prompt: "grading?"},function (response) {
 		if(responded===true) //If this isn't here the function will respond multiple times and result in grading many times
 			return;
@@ -30,7 +31,8 @@ function gradeTest(){
 	function setupVisuals(){ //Overlay that prevents clicking and adds link to stop grading.
 		var backgroundColor=$('body').css('background'); //Get the background color from the blackboard shell
 		backgroundColor=backgroundColor.substring(0,backgroundColor.indexOf(" url")); //Get the color from the background
-		backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.4)"; //Apply a overlay at 40% transparency of that color
+		backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.4)"; //Apply a overlay at 40% opacity of that color
+
 		//Create message and link to stop grading
 		var inner="<div><h1 class='steptitle' style='font-size: 35pt;text-shadow:0 1px 0 #eee;'>Autograding</h1><br/>" +
 			"<h1 class='steptitle' style='text-shadow:0 1px 0 #eee;font-size:20pt;'><a href=\"javascript:window.postMessage({ type: 'FROM_PAGE', text: 'Stop_Grading' }, '*')\">Stop Grading</a></h1></div>"
@@ -40,7 +42,9 @@ function gradeTest(){
 	function searchTest(){
 		var counter=$('span.count').text(); //Grab test number in queue
 		counter=counter.substring(counter.indexOf("of ")+3);
-		message({status: "TestTotal",info: parseInt(counter)},function (response){}); //Tell background script what test we are on to update progress notification
+		var testName=$("#pageTitleText").text();
+		testName=testName.substring(testName.indexOf(": ")+2);
+		message({status: "TestTotal",info: parseInt(counter),test: testName},function (response){}); //Tell background script what test we are on to update progress notification
 
 
 		var gradeInputs = [];
@@ -71,6 +75,7 @@ function gradeTest(){
 			gradeTotals.push(parseInt(label));
 		}
 		console.log("Grading "+gradeInputs.length+" responses.");
+		questions=gradeInputs.length;
 		grade(gradeInputs, gradeTotals, responses, answers);
 	}
 	function grade(inputs,totals,responses,answers){
@@ -117,9 +122,9 @@ function gradeTest(){
 			console.log("and didn't match: ");
 			console.log(nonmatchingWords);
 
-			message({status: "Graded_Response"},function (response){}); //Tell background script we graded a response so it can keep count
+			message({status: "Graded_Response",matching: matchingWords,nonmatching:nonmatchingWords},function (response){}); //Tell background script we graded a response so it can keep count
 		}
-		message({status: "Graded_Test"}, function(response){ //Tell background script we graded a test so it can keep track
+		message({status: "Graded_Test",grade:score,total: total,numQuestions: questions.length}, function(response){ //Tell background script we graded a test so it can keep track
 			if (response.status === 200) { //200 meaning OK
 				nextTest();
 			}

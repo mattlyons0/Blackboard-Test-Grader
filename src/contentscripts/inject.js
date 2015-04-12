@@ -66,12 +66,6 @@ function message(msg, response){
 			response(resp);
 			port.onMessage.removeListener(this);
 		}
-		else{
-			console.log("Blocked: ");
-			console.log(resp);
-			console.log("From: ");
-			console.log(msg);
-		}
 	});
 }
 //Inject script element into webpage and run that script. Remove after it runs.
@@ -107,8 +101,77 @@ function stem(str){
 function hookSummary(){ //Method that will be called when we finish grading and will inject the summary into any page.
 	var backgroundColor=$('body').css('background'); //Get the background color from the blackboard shell
 	backgroundColor=backgroundColor.substring(0,backgroundColor.indexOf(" url")); //Get the color from the background
-	backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.8)"; //Apply a overlay at 80% transparency of that color
-	//Create and make it remove itself onclick
-	var overlay=$("<div id='summaryOverlay' onclick='document.getElementById(\"summaryOverlay\").remove();' style='background: "+backgroundColor+";bottom: 0;left: 0;position: fixed;right: 0;" +
-	"top: 0;text-align:center;padding-top: 10%;padding-bottom:20%; z-index:1000'></div>").insertAfter($('body'));
+	backgroundColorA="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.8)"; //Apply a overlay at 80% opacity of that color
+	borderColor=colorBrightness(rgb2hex(backgroundColor),-15); //Calculate border color by darkening the background of the panel
+
+	var content="<h1>Autograding Summary</h1> <div id='autogradeSumContent'>Generating Summary...</div>";
+
+	//Create HTML Elements and add them
+	var contentPane="<div class='container' id='summaryContent' onclick='event.stopPropagation();' " + //Don't remove if this is clicked
+		"style='min-height:25%;border-radius: 10px;border: 2px solid "+borderColor+";'>"+content+"</div>";
+	var overlay=$("<div id='summaryOverlay' onclick='this.remove();'" + //Remove self when clicked (but not when inner elem is clicked)
+	" style='background: "+backgroundColorA+";bottom: 0;left: 0;position: fixed;right: 0;top: 0;text-align:center;" +
+	"padding:10%; z-index:1000'>"+contentPane+"</div>").insertAfter($('body'));
+
+	//Gather data
+	message({prompt: "data"}, function (resp){
+		var tests=resp.testCount;
+		var responses=resp.responseCount;
+		var matchingStems=resp.matchingStems;
+		var nonmatchingStems=resp.nonmatchingStems;
+		var testGrades=resp.grades;
+		var testTotals=resp.totalGrades;
+		var testNames=resp.testNames;
+		var numQuestions=resp.numQuestions;
+
+		//Parse Data
+		var totalPoints=0;
+		for(var i=0;i<tests;i++){
+			totalPoints+=testGrades[i];
+		}
+		var testAverage=totalPoints/tests;
+
+		//Display Data
+		var s="";
+		if(tests>1) s="s";
+		var rs="";
+		if(responses>1) rs="s";
+		var totalString="Graded "+tests+" test"+s+" and "+responses+" response"+rs+". Averaging "+(responses/tests)+" response"+((responses/tests)>1?"s":"")+" per test.";
+		var gradeString="The average score was "+testAverage;
+
+		//Update Output
+		$("#autogradeSumContent").html(totalString+"<br/>"+gradeString);
+	});
+
+
+}
+//http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color
+function colorBrightness(col, amt) {
+	var usePound = false;
+	if (col[0] == "#") {
+		col = col.slice(1);
+		usePound = true;
+	}
+	var num = parseInt(col,16);
+	var r = (num >> 16) + amt;
+	if (r > 255) r = 255;
+	else if  (r < 0) r = 0;
+	var b = ((num >> 8) & 0x00FF) + amt;
+	if (b > 255) b = 255;
+	else if  (b < 0) b = 0;
+	var g = (num & 0x0000FF) + amt;
+	if (g > 255) g = 255;
+	else if (g < 0) g = 0;
+	return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+}
+//http://stackoverflow.com/questions/1740700/how-to-get-hex-color-value-rather-than-rgb-value
+var hexDigits = new Array
+("0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f");
+//Function to convert hex format to a rgb color
+function rgb2hex(rgb) {
+	rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+	return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+}
+function hex(x) {
+	return isNaN(x) ? "00" : hexDigits[(x - x % 16) / 16] + hexDigits[x % 16];
 }

@@ -56,7 +56,7 @@ function gradeCenter(){
 				if (response.status !== 200) { //2xx meaning OK
 					console.error("Error talking to background script: " + response.status);
 					toggle.text("Error");
-					toggle.style.background="#CC3300" //Red
+					toggle.style.background="#CC3300"; //Red
 				}
 			});
 		}
@@ -65,7 +65,7 @@ function gradeCenter(){
 				if (response.status !== 200&&response.status!==204) { //2xx meaning OK
 					console.error("Error talking to background script: " + response.status);
 					toggle.text("Error");
-					toggle.style.background="#CC3300" //Red
+					toggle.style.background="#CC3300"; //Red
 				}
 			});
 		}

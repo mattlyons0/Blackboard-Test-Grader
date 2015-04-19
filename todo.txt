@@ -1,4 +1,4 @@
-Summary Screen after autograding?
+Summary Screen GUI
 	Count tests
 	Show keywords from answer and percent matches
 	Show most common keywords

@@ -124,7 +124,7 @@ function gradeTest(){
 
 			message({status: "Graded_Response",matching: matchingWords,nonmatching:nonmatchingWords},function (response){}); //Tell background script we graded a response so it can keep count
 		}
-		message({status: "Graded_Test",grade:score,total: total,numQuestions: questions.length}, function(response){ //Tell background script we graded a test so it can keep track
+		message({status: "Graded_Test",grade: score,total: total,numQuestions: questions}, function(response){ //Tell background script we graded a test so it can keep track
 			if (response.status === 200) { //200 meaning OK
 				nextTest();
 			}

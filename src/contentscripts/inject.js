@@ -115,8 +115,8 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 
 	//Gather data
 	message({prompt: "data"}, function (resp){
-		var tests=resp.testCount;
-		var responses=resp.responseCount;
+		var totalTests=resp.testCount;
+		var totalResponses=resp.responseCount;
 		var matchingStems=resp.matchingStems;
 		var nonmatchingStems=resp.nonmatchingStems;
 		var testGrades=resp.grades;
@@ -125,22 +125,50 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 		var numQuestions=resp.numQuestions;
 
 		//Parse Data
+
+		//Separate Different Tests
+		var testData=[];//Holds the data from each type of test
+		var testNamescopy=testNames.slice(0); //Clone it because $.unique mutates the argument
+		var tests= $.unique(testNames);//Contains the different types of tests
+		testNames=testNamescopy;
+		for(var i=0;i<tests.length;i++) { //Make testData an array for each test type
+			testData.push({testName: tests[i]});
+		}
+		var responseCount=0;
+		for(var i=0;i<totalTests;i++){
+			var test=tests.indexOf(testNames[i]);
+			var data=testData[test];
+			data.numQuestions=numQuestions[i];
+			data.total=testTotals[i];
+			if(!data.responses) {
+				data.responses = [];
+				for(var z=0;z<data.numQuestions;z++){
+					data.responses.push([]);
+				}
+			}
+			for(var x=0;x<numQuestions[i];x++){
+				var response={matching: matchingStems[responseCount],nonmatching: nonmatchingStems[responseCount]};
+				data.responses[x].push(response);
+				responseCount++;
+			}
+		}
+		//console.log(testData); //Uncomment to see testData structure
 		var totalPoints=0;
-		for(var i=0;i<tests;i++){
+		for(var i=0;i<totalTests;i++){
 			totalPoints+=testGrades[i];
 		}
-		var testAverage=totalPoints/tests;
+		var testAverage=totalPoints/totalTests;
 
 		//Display Data
-		var s="";
-		if(tests>1) s="s";
-		var rs="";
-		if(responses>1) rs="s";
-		var totalString="Graded "+tests+" test"+s+" and "+responses+" response"+rs+". Averaging "+(responses/tests)+" response"+((responses/tests)>1?"s":"")+" per test.";
+		var summary="Graded ";
+		if(testData.length>1){
+			summary="Graded "+testData.length+" different tests, ";
+		}
+		summary+=totalTests+" attempt"+(totalTests>1?"s":"")+" and "+totalResponses+" response"+totalResponses>1?"s.":".";
 		var gradeString="The average score was "+testAverage;
 
 		//Update Output
-		$("#autogradeSumContent").html(totalString+"<br/>"+gradeString);
+		$("#autogradeSumContent").html(summary+"<br/>"+gradeString);
 	});
 
 

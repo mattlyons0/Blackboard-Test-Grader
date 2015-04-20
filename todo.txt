@@ -10,7 +10,6 @@ Users Doc (This is what it does, this is how to deploy it)
 Polish
 How to edit
 
-Make Icon
 Options Menu
 	Disable Progress Notification
 	Disable completion notification

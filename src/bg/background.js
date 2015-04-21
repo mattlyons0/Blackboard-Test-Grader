@@ -15,6 +15,8 @@ var grades=[]; //Contains grades for each test
 var totalGrades=[]; //Contains total for each test
 var testNames=[]; //Contains test name for each test
 var numQuestions=[]; //Contains number of questions per test
+var responseScores=[]; //Contains score per response
+var responseTotals=[]; //Contains total per response
 
 chrome.runtime.onConnect.addListener(function(portt){
 	console.assert(portt.name == "MessageServer");
@@ -54,6 +56,8 @@ function processStatus(status,event){
 		totalGrades=[];
 		testNames=[];
 		numQuestions=[];
+		responseScores=[];
+		responseTotals=[];
 		refreshProgress();
 		responseObject.status=200; //200 meaning OK
 		port.postMessage(responseObject);
@@ -63,12 +67,14 @@ function processStatus(status,event){
 			responseCount++;
 			matchingStems.push(event.matching);
 			nonmatchingStems.push(event.nonmatching);
+			responseScores.push(event.score);
+			responseTotals.push(event.total);
 		}
 	}
 	else if(status==="Graded_Test"){
 		if(grading){
 			testCount++;
-			grades.push(event.score);
+			grades.push(event.grade);
 			totalGrades.push(event.total);
 			numQuestions.push(event.numQuestions);
 			var plural="";
@@ -130,6 +136,8 @@ function processPrompt(prompt){
 		responseObject.totalGrades=totalGrades;
 		responseObject.testNames=testNames;
 		responseObject.numQuestions=numQuestions;
+		responseObject.responseScores=responseScores;
+		responseObject.responseTotals=responseTotals;
 		port.postMessage(responseObject);
 	}
 	else{

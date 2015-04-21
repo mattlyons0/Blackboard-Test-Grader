@@ -110,7 +110,7 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 	var contentPane="<div class='container' id='summaryContent' onclick='event.stopPropagation();' " + //Don't remove if this is clicked
 		"style='min-height:25%;border-radius: 10px;border: 2px solid "+borderColor+";'>"+content+"</div>";
 	var overlay=$("<div id='summaryOverlay' onclick='this.remove();'" + //Remove self when clicked (but not when inner elem is clicked)
-	" style='background: "+backgroundColorA+";bottom: 0;left: 0;position: fixed;right: 0;top: 0;text-align:center;" +
+	" style='background: "+backgroundColorA+";bottom: 0;left: 0;position: absolute;height:100%;right: 0;top: 0;text-align:center;" +
 	"padding:10%; z-index:1000'>"+contentPane+"</div>").insertAfter($('body'));
 
 	//Gather data
@@ -123,6 +123,8 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 		var testTotals=resp.totalGrades;
 		var testNames=resp.testNames;
 		var numQuestions=resp.numQuestions;
+		var respTotals=resp.responseTotals;
+		var respScores=resp.responseScores;
 
 		//Parse Data
 
@@ -143,32 +145,103 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 			if(!data.responses) {
 				data.responses = [];
 				for(var z=0;z<data.numQuestions;z++){
-					data.responses.push([]);
+					data.responses.push({total: respTotals[responseCount], response: []});
 				}
 			}
 			for(var x=0;x<numQuestions[i];x++){
-				var response={matching: matchingStems[responseCount],nonmatching: nonmatchingStems[responseCount]};
-				data.responses[x].push(response);
+
+				var response={matching: matchingStems[responseCount],nonmatching: nonmatchingStems[responseCount],score: respScores[responseCount]};
+				data.responses[x].response.push(response);
 				responseCount++;
 			}
 		}
-		//console.log(testData); //Uncomment to see testData structure
-		var totalPoints=0;
-		for(var i=0;i<totalTests;i++){
-			totalPoints+=testGrades[i];
-		}
-		var testAverage=totalPoints/totalTests;
+		console.log(testData); //Uncomment to see testData structure
 
 		//Display Data
 		var summary="Graded ";
 		if(testData.length>1){
-			summary="Graded "+testData.length+" different tests, ";
+			summary+=testData.length+" different tests, ";
 		}
-		summary+=totalTests+" attempt"+(totalTests>1?"s":"")+" and "+totalResponses+" response"+totalResponses>1?"s.":".";
-		var gradeString="The average score was "+testAverage;
+		summary+=totalTests+" attempt"+(totalTests>1?"s":"")+" and "+totalResponses+" response"+(totalResponses>1?"s.":".");
+
+		var testSum=[];
+		for(var i=0;i<testData.length;i++){
+			var data=testData[i];
+			var str="<div style='background:rgba(0,0,0,.05);border-radius: 10px;border: 1px solid rgba(0,0,0,.1);padding:0 15px 15px 15px;" +
+				"margin-top:15px;'><h2>"+data.testName+"</h2>";
+			var totalAttempts=data.responses[0].response.length;
+			var totalResponses=0;
+			var points=[];
+			for(var x=0;x<data.responses.length;x++){
+				totalResponses+=data.responses[x].response.length;
+				for(var y=0;y<data.responses[x].response.length;y++){
+					points.push(data.responses[x].response[y].score);
+				}
+			}
+			var statTable="<table style='width:100%;table-layout:fixed;'><tr><td align='center' style='width:50%'>Attempts: "+totalResponses/data.numQuestions+"</td><td align='center'>Responses: "+totalResponses+"</td></tr>"+
+				"<tr><td align='center'>Average Score: "+parseFloat((math.sum(points)/totalAttempts).toFixed(4))+"/"+data.total+"</td><td align='center'>" +
+				"Median Score: "+parseFloat(math.median(points).toFixed(4))+"/"+data.total+"</td></tr></table>";
+			str+=statTable;
+			for(var x=0;x<data.responses.length;x++){
+				var qStr="<div style='background:rgba(0,0,0,.05);border-radius: 10px;border: 1px solid rgba(0,0,0,.1);padding:0 15px 15px 15px;" +
+					"margin-top:15px;'><h3>Question "+(x+1)+"</h3><table style='width:100%; table-layout:fixed;;'><tr>";
+				var pointTotal=data.responses[x].total;
+				var questions=data.responses[x].response;
+				points=[];
+				var totalStems= $.merge((questions[0].matching.slice(0)),questions[0].nonmatching);
+				$.unique(totalStems);
+
+				var totalMatchingStems=[];
+				var totalNonmatchingStems=[];
+				for(var y=0;y<questions.length;y++){
+					points.push(questions[y].score);
+					$.merge(totalMatchingStems,$.unique((questions[y].matching).slice(0)));
+					$.merge(totalNonmatchingStems,$.unique((questions[y].nonmatching).slice(0)));
+				}
+				console.log(totalMatchingStems);
+				qStr+="<td align='center' style='width:50%'>Average Score: "+parseFloat((math.sum(points)/questions.length).toFixed(4))+"/"+pointTotal+"</td><td align='center'>" +
+				"Median Score: "+parseFloat(math.median(points).toFixed(4))+"/"+pointTotal+"</td></tr></table>";
+
+				var stemMatchPercentage=[];
+				for(var y=0;y<totalStems.length;y++){
+					//Count match percentage and save it in variable
+					var count=0;
+					var total=questions.length;
+					for(var z=0;z<totalMatchingStems.length;z++){
+						if(totalMatchingStems[z]===totalStems[y]){
+							count++;
+						}
+					}
+					stemMatchPercentage.push({stem: totalStems[y],match: count/total});
+				}
+				stemMatchPercentage.sort(function(a,b){
+					return b.match - a.match;
+				});
+				qStr+="<br/><table style='width:75%;margin:auto;table-layout:fixed;'><tr><td align='center' style='width:50%'><b>Most Commonly Matching Stems</b></td><td align='center'><b>Least Commonly Matching Stems</b></td></tr>";
+				for(var y=0;y<stemMatchPercentage.length;y++){
+					if(y==10){
+						var id="RestOfTable"+data.testName+x;
+						var showMoreId="showmore"+data.testName+x;
+						qStr+="<tr id='"+showMoreId+"'><td colspan='2' align='center'><a href='#' onclick=\"document.getElementById('"+id+"').style.display='table-row-group';" +
+						"document.getElementById('"+showMoreId+"').remove();scrollTo();\">Show More</a></td></tr><tbody id='"+id+"' style='display:none;'>"
+					}
+					qStr+="<tr><td align='center'>\""+stemMatchPercentage[y].stem+"\" ("+parseFloat((stemMatchPercentage[y].match*100).toFixed(2))+"%)</td><td align='center'>"+
+					stemMatchPercentage[stemMatchPercentage.length-1-y].stem+"\" ("+parseFloat((stemMatchPercentage[stemMatchPercentage.length-1-y].match*100).toFixed(2))+"%)</td></tr>";
+					if(y==stemMatchPercentage.length-1&&y>=10){
+						qStr+="</tbody>"
+					}
+				}
+				qStr+="</table></div>";
+				str+=qStr;
+			}
+			testSum.push(str+"</div>");
+		}
 
 		//Update Output
-		$("#autogradeSumContent").html(summary+"<br/>"+gradeString);
+		for(var i=0;i<testSum.length;i++){
+			summary+=testSum[i];
+		}
+		$("#autogradeSumContent").html(summary);
 	});
 
 

@@ -1,9 +1,3 @@
-Summary Screen GUI
-	Count tests
-	Show keywords from answer and percent matches
-	Show most common keywords
-		That matched
-		That didn't match
 Handle duplicate words better (keep duplicates in correct answer)
 
 Users Doc (This is what it does, this is how to deploy it)

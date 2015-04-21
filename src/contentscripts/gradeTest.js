@@ -31,7 +31,7 @@ function gradeTest(){
 	function setupVisuals(){ //Overlay that prevents clicking and adds link to stop grading.
 		var backgroundColor=$('body').css('background'); //Get the background color from the blackboard shell
 		backgroundColor=backgroundColor.substring(0,backgroundColor.indexOf(" url")); //Get the color from the background
-		backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.4)"; //Apply a overlay at 40% opacity of that color
+		backgroundColor="rgba"+backgroundColor.substring(backgroundColor.indexOf("rgb")+3,backgroundColor.indexOf(")"))+",.6)"; //Apply a overlay at 60% opacity of that color
 
 		//Create message and link to stop grading
 		var inner="<div><h1 class='steptitle' style='font-size: 35pt;text-shadow:0 1px 0 #eee;'>Autograding</h1><br/>" +
@@ -99,7 +99,8 @@ function gradeTest(){
 					nonmatchingWords.push(word);
 			});
 			//Calculate score
-			var score=(matchingWords.length/totalWords)*total+""; //Calculate score into a string so we can shorten it potentially
+			var scoreNum=(matchingWords.length/totalWords)*total;
+			var score=scoreNum+""; //Calculate score into a string so we can shorten it potentially
 			if(score.length>10){ //Thats a problem because blackboard doesn't allow more than 10 characters to be submitted
 				score=score.substring(0,10); //Only take the first 10 characters
 			}
@@ -122,9 +123,9 @@ function gradeTest(){
 			console.log("and didn't match: ");
 			console.log(nonmatchingWords);
 
-			message({status: "Graded_Response",matching: matchingWords,nonmatching:nonmatchingWords},function (response){}); //Tell background script we graded a response so it can keep count
+			message({status: "Graded_Response",matching: matchingWords,nonmatching:nonmatchingWords,score: scoreNum,total: total},function (response){}); //Tell background script we graded a response so it can keep count
 		}
-		message({status: "Graded_Test",grade: score,total: total,numQuestions: questions}, function(response){ //Tell background script we graded a test so it can keep track
+		message({status: "Graded_Test",total: math.sum(totals),numQuestions: questions}, function(response){ //Tell background script we graded a test so it can keep track
 			if (response.status === 200) { //200 meaning OK
 				nextTest();
 			}
@@ -163,17 +164,19 @@ function gradeTest(){
 					$('input.submit.button-1').click(); //If theAttemptNavigator has not been loaded will go to Forbidden Page (but our script has confirmed that it has loaded)
 				}
 				else if(event.data.text=="Stop_Grading"){ //The stop grading link was clicked
+					window.stop();
 					$("#autogradeOverlay").remove(); //Remove overlay on current page
 					message({status: "Finished_Grading"},function (response){ //Tell the background script to stop grading
 						if (response.status==204) { //2xx meaning OK
+
+						}
+						else if(response.status==200){
 							hookSummary();
 						}
-						else if(response.status==200){}
 						else{
 							console.error("Error talking to background script: " + response.status);
 							return;
 						}
-						$("#autogradeOverlay").remove(); //Remove overlay on current page now, potentially later than first call
 					});
 				}
 

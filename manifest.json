@@ -32,7 +32,8 @@
 		"https://myasucourses.asu.edu/*"
 	  ],
 	  "js": [
-		"js/jquery/jquery.js",
+		"js/jquery/jquery.min.js",
+		"js/math.min.js",
 		"js/stemmer.js",
 		"src/contentscripts/inject.js",
 		"src/contentscripts/gradingMenu.js",
@@ -44,6 +45,7 @@
 	}
   ],
   "web_accessible_resources": [
-	"src/inject/*"
+	"src/inject/*",
+	"js/*"
   ]
 }

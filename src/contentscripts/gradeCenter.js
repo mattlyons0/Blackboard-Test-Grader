@@ -31,7 +31,7 @@ function gradeCenter(){
 		window.addEventListener("message", function (event) {
 			// We only accept messages from ourselves
 			if (event.source != window) {
-				console.warn("Event triggered from external source: '" + event.source + "' will be blocked.");
+				//console.warn("Event triggered from external source: '" + event.source + "' will be blocked.");
 				return;
 			}
 

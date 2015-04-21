@@ -2,11 +2,11 @@
   "manifest_version": 2,
 
   "name": "Blackboard Test Grader",
-  "description": "Adds button to automatically grades free response boxes of tests in blackboard.",
+  "description": "Adds button to automatically grade free response boxes of tests in blackboard.",
   "author": "Matt Lyons",
 
-  "version": "0.0.1",
-  //"homepage_url": "",
+  "version": "1.0.0",
+  "homepage_url": "http://matt-lyons.com",
   "icons": {
 	"16": "icons/icon16.png",
 	"48": "icons/icon48.png",

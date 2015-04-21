@@ -110,7 +110,7 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 	var contentPane="<div class='container' id='summaryContent' onclick='event.stopPropagation();' " + //Don't remove if this is clicked
 		"style='min-height:25%;border-radius: 10px;border: 2px solid "+borderColor+";'>"+content+"</div>";
 	var overlay=$("<div id='summaryOverlay' onclick='this.remove();'" + //Remove self when clicked (but not when inner elem is clicked)
-	" style='background: "+backgroundColorA+";bottom: 0;left: 0;position: absolute;height:100%;right: 0;top: 0;text-align:center;" +
+	" style='background: "+backgroundColorA+";bottom: 0;left: 0;position: absolute;height:100vh;right: 0;top: 0;text-align:center;" +
 	"padding:10%; z-index:1000'>"+contentPane+"</div>").insertAfter($('body'));
 
 	//Gather data
@@ -171,12 +171,17 @@ function hookSummary(){ //Method that will be called when we finish grading and 
 				"margin-top:15px;'><h2>"+data.testName+"</h2>";
 			var totalAttempts=data.responses[0].response.length;
 			var totalResponses=0;
-			var points=[];
+
 			for(var x=0;x<data.responses.length;x++){
 				totalResponses+=data.responses[x].response.length;
-				for(var y=0;y<data.responses[x].response.length;y++){
-					points.push(data.responses[x].response[y].score);
+			}
+			var points=[];
+			for(var x=0;x<data.responses[0].response.length;x++){
+				var point=0;
+				for(var y=0;y<data.responses.length;y++){
+					point+=data.responses[y].response[x].score;
 				}
+				points.push(point);
 			}
 			var statTable="<table style='width:100%;table-layout:fixed;'><tr><td align='center' style='width:50%'>Attempts: "+totalResponses/data.numQuestions+"</td><td align='center'>Responses: "+totalResponses+"</td></tr>"+
 				"<tr><td align='center'>Average Score: "+parseFloat((math.sum(points)/totalAttempts).toFixed(4))+"/"+data.total+"</td><td align='center'>" +

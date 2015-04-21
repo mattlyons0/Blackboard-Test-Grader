@@ -83,21 +83,26 @@ function gradeTest(){
 			var input=inputs[i];
 			var total=totals[i];
 
-			var response= $.unique(stem(responses[i])); //Stemmed without duplicates
-			var answer= $.unique(stem(answers[i])); //Stemmed without duplicates
+			var response= stem(responses[i]);
+			var answer= stem(answers[i]);
 
 			var totalWords=answer.length; //Number of stems in answer
 			if(totalWords==0)
 				totalWords=1; //Just in case there is no specified answer we don't want to give NaN
 			var matchingWords=[];
 			var nonmatchingWords=[];
-			answer.forEach(function(word){
-				if($.inArray(word,response)!==-1){
-					matchingWords.push(word);
+			for(var x=0;x<answer.length;x++){
+				var index=response.indexOf(response[x]);
+				if(index!==-1){
+					matchingWords.push(response[index]);
+					response=response.splice(index,1);
+
 				}
-				else
-					nonmatchingWords.push(word);
-			});
+				else {
+					nonmatchingWords.push(answer[x]);
+				}
+			}
+
 			//Calculate score
 			var scoreNum=(matchingWords.length/totalWords)*total;
 			var score=scoreNum+""; //Calculate score into a string so we can shorten it potentially

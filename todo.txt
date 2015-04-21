@@ -1,5 +1,3 @@
-Handle duplicate words better (keep duplicates in correct answer)
-
 Users Doc (This is what it does, this is how to deploy it)
 Polish
 How to edit

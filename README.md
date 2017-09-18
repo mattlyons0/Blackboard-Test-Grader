@@ -1,4 +1,4 @@
-Blackboard Test Grader
+![Logo](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/icons/icon128.png?raw=true)Blackboard Test Grader
 ======
 
 ### Disclaimer

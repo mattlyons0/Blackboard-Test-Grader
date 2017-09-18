@@ -1,6 +1,17 @@
 ![Logo](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/icons/icon128.png?raw=true)Blackboard Test Grader
 ======
 
+A Chrome Extension which enables automatic grading (currently using Porter's Stemmer and Stopword Removal) of (short) Free Response questions in Blackboard. Features include automatic grading summary, status notifications, background grading and regrade function.
+
+### Contents
+* [Disclaimer](#disclaimer)
+* [Purpose](#purpose)
+* [Screenshots](#screenshots)
+* [Grading Method](#grading-method)
+* [Usage](#usage)
+* [Modifying Source](#modifying-source)
+
+
 ### Disclaimer
 This program was designed for use at Arizona State University and thus has only been tested on said Blackboard Shells. It will need to be modified and tested for whichever school it is used at. Modification instructions are listed below.
 
@@ -11,6 +22,11 @@ Additionally this is no longer maintained by me as the courses it supported have
   - Reduce need to hire graders based on number of students in class
   - Reduce professor workload
   - Allow class to convert into MOOC and scale near limitlessly
+  
+### Screenshots
+Autograde Summary: ![Autograding Summary Screenshot](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/screenshots/gradingReport.jpg?raw=true)
+Autograding Overlay: ![Autograding Overlay Screenshot](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/screenshots/autograding.jpg?raw=true)
+Autograde Button: ![Autograde Button](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/screenshots/needsGrading.jpg?raw=true)
 
 ### Grading Method
 - Stopwords are first removed in responses (based on [included stopword list](https://github.com/mattlyons0/Blackboard-Test-Grader/blob/master/js/stemmer.js#L187))
@@ -19,7 +35,7 @@ Additionally this is no longer maintained by me as the courses it supported have
 - *Note: This grading implementation is largely experimental and would need to be monitored heavily (and likely integrated with a synonym service) in order to be used in a real course*
 
 ### Usage
-- Install extension
+- Install extension in Google Chrome/Chromium (See [Loading Unpacked Extensions](https://developer.chrome.com/extensions/getstarted#unpacked))
 - Open whitelisted Blackboard Page URL (Default: myasucourses.asu.edu)
 - Autograde All button will appear in Needs Grading page
 - Click Autograde All to grade all currently visible assignments
